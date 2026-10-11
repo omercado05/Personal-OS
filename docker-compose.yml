@@ -1,0 +1,180 @@
+# Personal OS — entorno local.
+#
+# 6 servicios: frontend · backend · mysql · postgres · clickhouse · hexclave-server
+#
+#   Dev (rápido):        docker compose up -d mysql postgres clickhouse hexclave-server
+#                        + `pnpm dev` en backend/ y frontend/ (hot-reload)
+#   Integración (prod):  docker compose up --build
+#
+# MySQL, PostgreSQL y ClickHouse NO se publican al host (solo red interna).
+
+name: personal-os
+
+services:
+  # --- Base de datos de la aplicación ---------------------------------------
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # --- Base de datos de Hexclave --------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # --- Analytics de Hexclave ------------------------------------------------
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.10
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # --- Hexclave (Stack Auth) self-hosted: dashboard (8101) + API (8102) ------
+  hexclave-server:
+    image: stackauth/server:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_STACK_API_URL: ${HEXCLAVE_PUBLIC_API_URL}
+      NEXT_PUBLIC_STACK_DASHBOARD_URL: ${HEXCLAVE_PUBLIC_DASHBOARD_URL}
+      HEXCLAVE_TRUSTED_PROXY: ${HEXCLAVE_TRUSTED_PROXY:-}
+      STACK_DATABASE_CONNECTION_STRING: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      STACK_SERVER_SECRET: ${STACK_SERVER_SECRET}
+      CRON_SECRET: ${CRON_SECRET}
+      STACK_CLICKHOUSE_URL: http://clickhouse:8123
+      STACK_CLICKHOUSE_DATABASE: ${CLICKHOUSE_DB}
+      STACK_CLICKHOUSE_ADMIN_USER: ${CLICKHOUSE_USER}
+      STACK_CLICKHOUSE_ADMIN_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      STACK_CLICKHOUSE_EXTERNAL_PASSWORD: ${STACK_CLICKHOUSE_EXTERNAL_PASSWORD}
+      STACK_INTERNAL_PROJECT_PUBLISHABLE_CLIENT_KEY: ${STACK_INTERNAL_PROJECT_PUBLISHABLE_CLIENT_KEY}
+      STACK_INTERNAL_PROJECT_SECRET_SERVER_KEY: ${STACK_INTERNAL_PROJECT_SECRET_SERVER_KEY}
+      STACK_SEED_INTERNAL_PROJECT_SUPER_SECRET_ADMIN_KEY: ${STACK_SEED_INTERNAL_PROJECT_SUPER_SECRET_ADMIN_KEY}
+      STACK_SEED_INTERNAL_PROJECT_USER_EMAIL: ${STACK_SEED_INTERNAL_PROJECT_USER_EMAIL}
+      STACK_SEED_INTERNAL_PROJECT_USER_PASSWORD: ${STACK_SEED_INTERNAL_PROJECT_USER_PASSWORD}
+      STACK_SEED_INTERNAL_PROJECT_USER_INTERNAL_ACCESS: ${STACK_SEED_INTERNAL_PROJECT_USER_INTERNAL_ACCESS}
+      STACK_SEED_INTERNAL_PROJECT_SIGN_UP_ENABLED: ${STACK_SEED_INTERNAL_PROJECT_SIGN_UP_ENABLED}
+    ports:
+      - "8101:8101" # dashboard
+      - "8102:8102" # API
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:8102/health?db=1').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 300s
+
+  # --- API (Fastify) --------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      hexclave-server:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      HOST: 0.0.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      APP_VERSION: "0.1.0"
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      HEXCLAVE_API_URL: ${HEXCLAVE_PUBLIC_API_URL}
+      HEXCLAVE_INTERNAL_API_URL: ${HEXCLAVE_INTERNAL_API_URL}
+      HEXCLAVE_PROJECT_ID: ${HEXCLAVE_PROJECT_ID:-}
+      HEXCLAVE_PUBLISHABLE_CLIENT_KEY: ${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-}
+      HEXCLAVE_SECRET_SERVER_KEY: ${HEXCLAVE_SECRET_SERVER_KEY:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:4000/api/v1/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  # --- Web (Next.js) --------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_STACK_API_URL: ${HEXCLAVE_PUBLIC_API_URL:-http://localhost:8102}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  mysql-data:
+  postgres-data:
+  clickhouse-data:
+
+networks:
+  default:
+    name: personal-os

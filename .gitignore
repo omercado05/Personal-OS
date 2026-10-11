@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+
+# Salidas de build
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Entorno (nunca subir secretos reales)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Tests / cobertura
+coverage/
+
+# Editor y sistema operativo
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Docker
+*.pid

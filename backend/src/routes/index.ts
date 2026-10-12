@@ -6,11 +6,13 @@ import { createAuthHook } from "../middleware/auth.js";
 import { createHealthService, type HealthService } from "../services/health.service.js";
 import { createKnowledgeService, type KnowledgeService } from "../services/knowledge.service.js";
 import { createProjectService, type ProjectService } from "../services/project.service.js";
+import { createSearchService, type SearchService } from "../services/search.service.js";
 import { createUserService } from "../services/user.service.js";
 import { healthRoutes } from "./health.routes.js";
 import { knowledgeRoutes } from "./knowledge.routes.js";
 import { meRoutes } from "./me.routes.js";
 import { projectRoutes } from "./project.routes.js";
+import { searchRoutes } from "./search.routes.js";
 
 /** Prefijo común de todas las rutas de la API. */
 export const API_PREFIX = "/api/v1";
@@ -24,6 +26,8 @@ export interface RouteDependencies {
   knowledge: KnowledgeService;
   /** Lógica de proyectos. */
   projects: ProjectService;
+  /** Búsqueda y dashboard. */
+  search: SearchService;
 }
 
 /** Construye las dependencias por defecto (implementaciones reales). */
@@ -39,6 +43,7 @@ export function createRouteDependencies(): RouteDependencies {
     }),
     knowledge: createKnowledgeService(),
     projects: createProjectService(),
+    search: createSearchService(),
   };
 }
 
@@ -53,6 +58,9 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDependencies): v
     prefix: API_PREFIX,
   });
   app.register(projectRoutes({ auth: deps.auth, service: deps.projects }), {
+    prefix: API_PREFIX,
+  });
+  app.register(searchRoutes({ auth: deps.auth, service: deps.search }), {
     prefix: API_PREFIX,
   });
 }

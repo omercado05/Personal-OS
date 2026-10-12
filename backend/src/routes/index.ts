@@ -5,10 +5,12 @@ import { createRemoteTokenVerifier } from "../auth/jwt-verifier.js";
 import { createAuthHook } from "../middleware/auth.js";
 import { createHealthService, type HealthService } from "../services/health.service.js";
 import { createKnowledgeService, type KnowledgeService } from "../services/knowledge.service.js";
+import { createProjectService, type ProjectService } from "../services/project.service.js";
 import { createUserService } from "../services/user.service.js";
 import { healthRoutes } from "./health.routes.js";
 import { knowledgeRoutes } from "./knowledge.routes.js";
 import { meRoutes } from "./me.routes.js";
+import { projectRoutes } from "./project.routes.js";
 
 /** Prefijo común de todas las rutas de la API. */
 export const API_PREFIX = "/api/v1";
@@ -20,6 +22,8 @@ export interface RouteDependencies {
   auth: preHandlerHookHandler;
   /** Lógica de conocimiento y tags. */
   knowledge: KnowledgeService;
+  /** Lógica de proyectos. */
+  projects: ProjectService;
 }
 
 /** Construye las dependencias por defecto (implementaciones reales). */
@@ -34,17 +38,21 @@ export function createRouteDependencies(): RouteDependencies {
       users,
     }),
     knowledge: createKnowledgeService(),
+    projects: createProjectService(),
   };
 }
 
 /**
  * Registro central de rutas. Cada módulo (knowledge, projects, tags, ...) se
- * añadirá aquí en su fase correspondiente.
+ * añade aquí en su fase correspondiente.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDependencies): void {
   app.register(healthRoutes(deps.health), { prefix: API_PREFIX });
   app.register(meRoutes(deps.auth), { prefix: API_PREFIX });
   app.register(knowledgeRoutes({ auth: deps.auth, service: deps.knowledge }), {
+    prefix: API_PREFIX,
+  });
+  app.register(projectRoutes({ auth: deps.auth, service: deps.projects }), {
     prefix: API_PREFIX,
   });
 }

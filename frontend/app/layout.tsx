@@ -1,5 +1,8 @@
+import { HexclaveProvider, HexclaveTheme } from "@hexclave/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+
+import { hexclaveClientApp } from "@/hexclave/client";
 
 import "./globals.css";
 
@@ -10,8 +13,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
-      <body>{children}</body>
+    <html lang="es" suppressHydrationWarning>
+      <body>
+        <HexclaveProvider app={hexclaveClientApp}>
+          <HexclaveTheme>{children}</HexclaveTheme>
+        </HexclaveProvider>
+      </body>
     </html>
   );
 }

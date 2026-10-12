@@ -18,10 +18,16 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM deps AS build
 COPY . .
 # Las variables NEXT_PUBLIC_* se incrustan en el bundle en tiempo de build.
+# (La secret server key NO se pasa aquí: es solo de servidor y se inyecta en
+# tiempo de ejecución; ver docker-compose.yml.)
 ARG NEXT_PUBLIC_API_URL="http://localhost:4000"
-ARG NEXT_PUBLIC_STACK_API_URL="http://localhost:8102"
+ARG NEXT_PUBLIC_HEXCLAVE_API_URL="http://localhost:8102"
+ARG NEXT_PUBLIC_HEXCLAVE_PROJECT_ID=""
+ARG NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY=""
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_STACK_API_URL=$NEXT_PUBLIC_STACK_API_URL
+    NEXT_PUBLIC_HEXCLAVE_API_URL=$NEXT_PUBLIC_HEXCLAVE_API_URL \
+    NEXT_PUBLIC_HEXCLAVE_PROJECT_ID=$NEXT_PUBLIC_HEXCLAVE_PROJECT_ID \
+    NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY=$NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY
 RUN pnpm build
 
 # --- Imagen final (mínima, usuario no root) --------------------------------

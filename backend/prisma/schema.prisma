@@ -1,0 +1,102 @@
+// Prisma schema — Personal OS (MySQL 8).
+// Documentación del modelo: DEVELOPMENT_PLAN.md §6.
+//
+// Prisma 7: el generador `prisma-client` (Rust-free) exige `output` y el cliente
+// se importa desde la carpeta generada (no desde node_modules).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// Tabla ligera sincronizada de forma perezosa desde el JWT de Hexclave.
+/// `stack_user_id` = claim `sub`.
+model User {
+  id          BigInt   @id @default(autoincrement())
+  stackUserId String   @unique @map("stack_user_id") @db.VarChar(255)
+  email       String?  @db.VarChar(320)
+  displayName String?  @map("display_name") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  knowledgeEntries KnowledgeEntry[]
+  projects         Project[]
+
+  @@map("users")
+}
+
+/// Entrada de conocimiento/apunte. `category` se valida en código contra una
+/// lista fija (ver DEVELOPMENT_PLAN.md §6.1).
+model KnowledgeEntry {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  category  String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags KnowledgeEntryTag[]
+
+  @@index([userId, category])
+  @@fulltext([title, content])
+  @@map("knowledge_entries")
+}
+
+/// Etiqueta normalizada (nombre único, en minúsculas).
+model Tag {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  knowledgeEntries KnowledgeEntryTag[]
+
+  @@map("tags")
+}
+
+/// Tabla puente N:M entre entradas de conocimiento y tags.
+model KnowledgeEntryTag {
+  knowledgeEntryId BigInt @map("knowledge_entry_id")
+  tagId            BigInt @map("tag_id")
+
+  knowledgeEntry KnowledgeEntry @relation(fields: [knowledgeEntryId], references: [id], onDelete: Cascade)
+  tag            Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([knowledgeEntryId, tagId])
+  @@map("knowledge_entry_tags")
+}
+
+/// Proyecto personal. `status` se valida en código contra una lista fija.
+model Project {
+  id            BigInt   @id @default(autoincrement())
+  userId        BigInt   @map("user_id")
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  status        String   @db.VarChar(30)
+  url           String?  @db.VarChar(2048)
+  repositoryUrl String?  @map("repository_url") @db.VarChar(2048)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  technologies ProjectTechnology[]
+
+  @@index([userId, status])
+  @@map("projects")
+}
+
+/// Tecnología usada por un proyecto (relación N:M simple, sin entidad global).
+model ProjectTechnology {
+  projectId BigInt @map("project_id")
+  name      String @db.VarChar(100)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, name])
+  @@map("project_technologies")
+}

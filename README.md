@@ -4,16 +4,14 @@ Aplicación web personal y privada para organizar proyectos, conocimiento/apunte
 recursos y módulos personales. Desarrollada y mantenida por una sola persona, desplegada en
 un servidor personal con Docker y Dockploy.
 
-> **Estado actual: Fase 1 (bootstrap) completada.** Frontend, backend, Docker (6 servicios) y
-> comprobaciones (TypeScript, lint, tests, build) en verde. Consulta `DEVELOPMENT_PLAN.md`
-> para el plan completo y `PROGRESS.md` para el estado.
+> **Estado actual: Fase 2 (backend core + base de datos) completada.** Prisma inicializado, migración aplicada a MySQL, capas routes→controllers→services→repositories, envelope y errores estructurados, validación Zod, `GET /api/v1/health/ready` y stack Docker (6 servicios) operativo. Consulta `DEVELOPMENT_PLAN.md` para el plan y `PROGRESS.md` para detalles.
 
 ## Stack
 
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
 - **Backend:** Node.js + TypeScript + Fastify 5 (API REST `/api/v1`)
 - **Base de datos:** MySQL 8.4
-- **ORM:** Prisma (se integra en la Fase 2)
+- **ORM:** Prisma 7.10.0 (+ `@prisma/adapter-mariadb`)
 - **Autenticación:** Hexclave (antes Stack Auth) — **self-hosted** con `stackauth/server`
 - **Contenedores:** Docker + docker-compose
 - **Despliegue:** Dockploy
@@ -93,6 +91,12 @@ cd backend && pnpm install && pnpm dev        # http://localhost:4000
 cd frontend && pnpm install && pnpm dev       # http://localhost:3000
 ```
 
+> El frontend fuera de Docker **no** lee el `.env` de la raíz. Para que la autenticación
+> funcione en este modo, crea `frontend/.env.local` con `NEXT_PUBLIC_API_URL` y las
+> variables públicas de Hexclave derivadas de las de la raíz:
+> `NEXT_PUBLIC_HEXCLAVE_API_URL`, `NEXT_PUBLIC_HEXCLAVE_PROJECT_ID` y
+> `NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY` (ver comentarios en `.env.example`).
+
 ### Modo B — Integración (tipo producción)
 
 Levanta los 6 servicios construyendo las imágenes:
@@ -109,7 +113,7 @@ docker compose up --build
 | Servicio            | URL                     | Notas                                   |
 | ------------------- | ----------------------- | --------------------------------------- |
 | Frontend            | http://localhost:3000   | Next.js                                 |
-| Backend             | http://localhost:4000   | `GET /api/v1/health`                    |
+| Backend | http://localhost:4000 | `GET /api/v1/health` · `GET /api/v1/health/ready` |
 | Hexclave dashboard  | http://localhost:8101   | Acceso con el usuario administrador      |
 | Hexclave API        | http://localhost:8102   | Usada por el frontend y el backend       |
 | MySQL / Postgres / ClickHouse | *(interno)*    | No expuestos al host                    |
@@ -125,8 +129,12 @@ pnpm start          # ejecuta el build
 pnpm typecheck      # TypeScript estricto
 pnpm lint           # ESLint
 pnpm format         # Prettier (formateo)
-pnpm format:check   # Prettier (comprobación)
-pnpm test           # tests (backend: Vitest)
+pnpm db:generate    # genera cliente Prisma (src/generated/)
+pnpm db:migrate      # migraciones en desarrollo (migrate dev)
+pnpm db:deploy       # aplica migraciones en producción (migrate deploy)
+pnpm db:studio       # interfaz gráfica de Prisma
+pnpm db:reset        # resetea BD y aplica migraciones (dev)
+pnpm prepare         # genera cliente Prisma (ejecutado tras pnpm install)
 ```
 
 ## Documentación

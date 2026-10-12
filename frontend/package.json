@@ -18,6 +18,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json,md}\""
   },
   "dependencies": {
+    "@hexclave/next": "^1.0.125",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"

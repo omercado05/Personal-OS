@@ -23,6 +23,9 @@ yarn-error.log*
 # Tests / cobertura
 coverage/
 
+# Prisma: cliente generado (se regenera con `pnpm db:generate`)
+backend/src/generated/
+
 # Editor y sistema operativo
 .DS_Store
 Thumbs.db

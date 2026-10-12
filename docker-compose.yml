@@ -6,7 +6,10 @@
 #                        + `pnpm dev` en backend/ y frontend/ (hot-reload)
 #   Integración (prod):  docker compose up --build
 #
-# MySQL, PostgreSQL y ClickHouse NO se publican al host (solo red interna).
+# PostgreSQL y ClickHouse NO se publican al host (solo red interna).
+# MySQL SÍ se publica, pero solo en 127.0.0.1, para poder ejecutar `pnpm dev` y
+# las migraciones de Prisma (`pnpm db:migrate`) desde el host. En el contenedor
+# `backend` se usa siempre el hostname interno `mysql`.
 
 name: personal-os
 
@@ -25,6 +28,9 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:3306:3306" # solo localhost, para dev/migraciones desde el host
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 10s
@@ -130,6 +136,10 @@ services:
       HEXCLAVE_PROJECT_ID: ${HEXCLAVE_PROJECT_ID:-}
       HEXCLAVE_PUBLISHABLE_CLIENT_KEY: ${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-}
       HEXCLAVE_SECRET_SERVER_KEY: ${HEXCLAVE_SECRET_SERVER_KEY:-}
+      # `iss` es la URL pública (debe coincidir con el claim del token). El JWKS
+      # NO se fija aquí: el backend lo deriva de la URL interna + project ID.
+      HEXCLAVE_ISSUER: ${HEXCLAVE_ISSUER:-}
+      HEXCLAVE_AUDIENCE: ${HEXCLAVE_AUDIENCE:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     ports:
       - "4000:4000"
@@ -149,7 +159,9 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
-        NEXT_PUBLIC_STACK_API_URL: ${HEXCLAVE_PUBLIC_API_URL:-http://localhost:8102}
+        NEXT_PUBLIC_HEXCLAVE_API_URL: ${HEXCLAVE_PUBLIC_API_URL:-http://localhost:8102}
+        NEXT_PUBLIC_HEXCLAVE_PROJECT_ID: ${HEXCLAVE_PROJECT_ID:-}
+        NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY: ${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-}
     restart: unless-stopped
     depends_on:
       backend:

@@ -8,8 +8,12 @@ RUN npm install --global pnpm@12.11.2
 WORKDIR /app
 
 # --- Dependencias (incluye dev, necesarias para compilar) -------------------
+# Se copian el schema y la config de Prisma antes de instalar porque el script
+# `prepare` ejecuta `prisma generate` (genera el cliente en src/generated).
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY prisma.config.ts ./
+COPY prisma ./prisma
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 
@@ -17,13 +21,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM deps AS build
 COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
-RUN pnpm build
+RUN pnpm db:generate && pnpm build
 
 # --- Dependencias de producción --------------------------------------------
+# `--ignore-scripts` evita que se ejecute `prepare` (que necesita el CLI de
+# Prisma, solo presente en dev). El cliente ya viene compilado en `dist`.
 FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --prod
+    pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # --- Imagen final (mínima, usuario no root) --------------------------------
 FROM node:24.21.0-bookworm-slim AS runtime

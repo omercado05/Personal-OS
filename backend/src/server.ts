@@ -1,5 +1,6 @@
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
+import { prisma } from "./lib/prisma.js";
 
 const app = buildApp();
 
@@ -18,7 +19,10 @@ function registerShutdownHandlers(): void {
       app.log.info({ signal }, "Cerrando el servidor");
       app
         .close()
-        .then(() => process.exit(0))
+        .then(() => prisma.$disconnect())
+        .then(() => {
+          process.exit(0);
+        })
         .catch((error: unknown) => {
           app.log.error(error, "Error al cerrar el servidor");
           process.exit(1);

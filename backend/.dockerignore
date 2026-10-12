@@ -10,3 +10,5 @@ coverage
 Dockerfile
 .dockerignore
 README.md
+# Cliente Prisma generado: se regenera dentro de la imagen con `prisma generate`.
+src/generated

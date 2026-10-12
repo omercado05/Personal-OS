@@ -104,7 +104,7 @@ export default function GlobalSearch() {
           {items.map((item) => (
             <Link
               key={`${item.kind}-${item.id}`}
-              href={item.kind === "knowledge" ? `/knowledge#${item.id}` : `/projects#${item.id}`}
+              href={item.kind === "knowledge" ? `/knowledge/${item.id}` : `/projects/${item.id}`}
               onClick={() => setOpen(false)}
             >
               <span className="search__kind">

@@ -1,4 +1,114 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState, type FormEvent } from "react";
+
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Pagination from "@/components/ui/Pagination";
+import { PROJECT_STATUSES, PROJECT_STATUS_LABELS } from "@/lib/constants";
+import { deleteProject, listProjects } from "@/lib/projects";
+import type { ListMeta, Project } from "@/lib/types";
+import { useApi } from "@/lib/use-api";
+
+const PAGE_SIZE = 10;
+
 export default function ProjectsPage() {
+  const api = useApi();
+
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [meta, setMeta] = useState<ListMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [qInput, setQInput] = useState("");
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await listProjects(
+          api,
+          {
+            q: q || undefined,
+            status: status ? (status as Project["status"]) : undefined,
+            page,
+            pageSize: PAGE_SIZE,
+          },
+          controller.signal,
+        );
+        if (active) {
+          setProjects(response.data);
+          setMeta(response.meta);
+          setError(null);
+        }
+      } catch (cause) {
+        if (active && !controller.signal.aborted) {
+          setError(cause instanceof Error ? cause.message : "No se pudo cargar.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [api, q, status, page, reloadKey]);
+
+  function refresh() {
+    setLoading(true);
+    setReloadKey((key) => key + 1);
+  }
+
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPage(1);
+    setQ(qInput.trim());
+    refresh();
+  }
+
+  function clearFilters() {
+    setQInput("");
+    setQ("");
+    setStatus("");
+    setPage(1);
+    refresh();
+  }
+
+  function goToPage(nextPage: number) {
+    setPage(nextPage);
+    refresh();
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteProject(api, deleteTarget.id);
+      setDeleteTarget(null);
+      refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo eliminar.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const hasFilters = Boolean(q || status);
+
   return (
     <div className="panel">
       <header className="panel__header">
@@ -6,10 +116,133 @@ export default function ProjectsPage() {
           <p className="eyebrow">Módulo</p>
           <h1>Projects</h1>
         </div>
+        <Link className="link-button" href="/projects/new">
+          + Nuevo proyecto
+        </Link>
       </header>
-      <p className="muted">
-        La gestión de proyectos (listar, crear, editar, eliminar) llega en la Fase 8.
-      </p>
+
+      <form className="toolbar" onSubmit={applyFilters}>
+        <input
+          className="input"
+          type="search"
+          value={qInput}
+          onChange={(event) => setQInput(event.target.value)}
+          placeholder="Buscar por nombre o descripción…"
+          aria-label="Buscar proyectos"
+        />
+        <select
+          className="select"
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value);
+            setPage(1);
+            refresh();
+          }}
+          aria-label="Filtrar por estado"
+        >
+          <option value="">Todos los estados</option>
+          {PROJECT_STATUSES.map((value) => (
+            <option key={value} value={value}>
+              {PROJECT_STATUS_LABELS[value]}
+            </option>
+          ))}
+        </select>
+        <button type="submit" className="primary">
+          Filtrar
+        </button>
+        {hasFilters ? (
+          <button type="button" className="ghost" onClick={clearFilters}>
+            Limpiar
+          </button>
+        ) : null}
+      </form>
+
+      {error ? (
+        <div className="alert">
+          <span>{error}</span>
+          <button type="button" className="ghost small" onClick={refresh}>
+            Reintentar
+          </button>
+        </div>
+      ) : null}
+
+      {loading && !projects ? <p className="muted">Cargando…</p> : null}
+
+      {!loading && !error && projects && projects.length === 0 ? (
+        <div className="empty">
+          <p className="muted">
+            {hasFilters
+              ? "No hay proyectos que coincidan con los filtros."
+              : "Todavía no hay proyectos."}
+          </p>
+          {hasFilters ? (
+            <button type="button" className="ghost" onClick={clearFilters}>
+              Limpiar filtros
+            </button>
+          ) : (
+            <Link className="link-button" href="/projects/new">
+              Crear el primero
+            </Link>
+          )}
+        </div>
+      ) : null}
+
+      {projects && projects.length > 0 ? (
+        <ul className="data-list">
+          {projects.map((project) => (
+            <li key={project.id} className="data-list__item">
+              <div className="data-list__main">
+                <div className="data-list__title">
+                  <Link href={`/projects/${project.id}`}>{project.name}</Link>
+                </div>
+                <div className="data-list__meta">
+                  <span className={`badge badge--${project.status}`}>
+                    {PROJECT_STATUS_LABELS[project.status]}
+                  </span>
+                  {project.technologies.map((tech) => (
+                    <span key={tech} className="tag">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+                {project.description ? (
+                  <p className="data-list__snippet muted">{project.description}</p>
+                ) : null}
+              </div>
+              <div className="data-list__actions">
+                <Link className="link-button ghost small" href={`/projects/${project.id}/edit`}>
+                  Editar
+                </Link>
+                <button
+                  type="button"
+                  className="ghost small danger"
+                  onClick={() => setDeleteTarget(project)}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {meta ? (
+        <Pagination page={meta.page} totalPages={meta.totalPages} onChange={goToPage} />
+      ) : null}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Eliminar proyecto"
+        message={
+          <>
+            ¿Seguro que quieres eliminar <strong>{deleteTarget?.name}</strong>? Esta acción no se
+            puede deshacer.
+          </>
+        }
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

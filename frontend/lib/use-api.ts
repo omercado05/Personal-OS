@@ -3,13 +3,13 @@
 import { useHexclaveApp } from "@hexclave/next";
 import { useCallback } from "react";
 
-import { apiFetch } from "./api";
+import { apiFetch, type ApiFn } from "./api";
 
 /**
  * Devuelve una función para llamar a la API enviando automáticamente el access
  * token de Hexclave. Ejemplo: `await api<{ data: Project }>("/api/v1/projects/1")`.
  */
-export function useApi() {
+export function useApi(): ApiFn {
   const app = useHexclaveApp();
 
   return useCallback(

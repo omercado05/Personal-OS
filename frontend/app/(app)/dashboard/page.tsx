@@ -88,9 +88,17 @@ export default function DashboardPage() {
           <p className="eyebrow">Resumen</p>
           <h1>Dashboard</h1>
         </div>
-        <button type="button" className="ghost" onClick={reload} disabled={loading}>
-          {loading ? "Actualizando…" : "Actualizar"}
-        </button>
+        <div className="row-actions">
+          <Link className="link-button small" href="/knowledge/new">
+            + Entrada
+          </Link>
+          <Link className="link-button small" href="/projects/new">
+            + Proyecto
+          </Link>
+          <button type="button" className="ghost" onClick={reload} disabled={loading}>
+            {loading ? "Actualizando…" : "Actualizar"}
+          </button>
+        </div>
       </header>
 
       {error ? (
@@ -117,7 +125,7 @@ export default function DashboardPage() {
               <ul className="list">
                 {data.recentKnowledge.map((entry) => (
                   <li key={entry.id}>
-                    <Link href={`/knowledge#${entry.id}`}>{entry.title}</Link>
+                    <Link href={`/knowledge/${entry.id}`}>{entry.title}</Link>
                     <span className="pill">{entry.category}</span>
                     {entry.tags.length > 0 ? (
                       <span className="muted"> {entry.tags.join(", ")}</span>
@@ -139,7 +147,7 @@ export default function DashboardPage() {
               <ul className="list">
                 {data.recentProjects.map((project) => (
                   <li key={project.id}>
-                    <Link href={`/projects#${project.id}`}>{project.name}</Link>
+                    <Link href={`/projects/${project.id}`}>{project.name}</Link>
                     <span className="pill">{project.status}</span>
                     {project.technologies.length > 0 ? (
                       <span className="muted"> {project.technologies.join(", ")}</span>

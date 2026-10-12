@@ -1,5 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+/**
+ * Firma de la función que expone el hook `useApi`: llama a la API e inyecta el
+ * access token de Hexclave. Devuelve el envelope completo (`{ data, meta? }`).
+ */
+export type ApiFn = <T>(path: string, init?: RequestInit) => Promise<T>;
+
 /** Error con el código y el status devueltos por la API. */
 export class ApiError extends Error {
   readonly status: number;

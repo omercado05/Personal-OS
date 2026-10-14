@@ -4,7 +4,12 @@ Aplicación web personal y privada para organizar proyectos, conocimiento/apunte
 recursos y módulos personales. Desarrollada y mantenida por una sola persona, desplegada en
 un servidor personal con Docker y Dockploy.
 
-> **Estado actual: Fase 2 (backend core + base de datos) completada.** Prisma inicializado, migración aplicada a MySQL, capas routes→controllers→services→repositories, envelope y errores estructurados, validación Zod, `GET /api/v1/health/ready` y stack Docker (6 servicios) operativo. Consulta `DEVELOPMENT_PLAN.md` para el plan y `PROGRESS.md` para detalles.
+> **Estado actual: Fase 8 completada.** Backend (Fastify + Prisma + MySQL) y frontend
+> (Next.js: dashboard, Knowledge, Projects, búsqueda global) operativos con autenticación
+> Hexclave self-hosted. **Fase 9 en curso** (hardening: rate limiting y headers; Docker de
+> producción; parametrización del host público; backups; acceso remoto con Tailscale).
+> Consulta `DEVELOPMENT_PLAN.md` para el plan, `PROGRESS.md` para el estado y
+> [`docs/runbook.md`](./docs/runbook.md) para la operación diaria.
 
 ## Stack
 
@@ -32,6 +37,9 @@ un servidor personal con Docker y Dockploy.
 │     ├─ app.ts          # construcción de Fastify
 │     └─ server.ts       # arranque
 ├─ docker-compose.yml    # entorno local (6 servicios)
+├─ docker/               # ficheros de apoyo (p. ej. entrypoint de Hexclave)
+├─ scripts/              # utilidades (p. ej. backup.sh)
+├─ docs/                 # documentación de operación (runbook)
 ├─ .env.example          # todas las variables, valores ficticios
 ├─ DEVELOPMENT_PLAN.md   # plan detallado y ADRs
 ├─ PROGRESS.md           # memoria persistente del proyecto
@@ -50,7 +58,8 @@ El stack local (`docker-compose.yml`) consta de **6 servicios**:
 frontend · backend · mysql · postgres · clickhouse · hexclave-server
 ```
 
-`mysql`, `postgres` y `clickhouse` **no se publican al host** (solo red interna de Docker).
+`mysql` se publica solo en `127.0.0.1:3306` (para migraciones/copias desde el host);
+`postgres` y `clickhouse` **no se publican** (solo red interna de Docker).
 
 ## Puesta en marcha
 
@@ -116,7 +125,8 @@ docker compose up --build
 | Backend | http://localhost:4000 | `GET /api/v1/health` · `GET /api/v1/health/ready` |
 | Hexclave dashboard  | http://localhost:8101   | Acceso con el usuario administrador      |
 | Hexclave API        | http://localhost:8102   | Usada por el frontend y el backend       |
-| MySQL / Postgres / ClickHouse | *(interno)*    | No expuestos al host                    |
+| MySQL | 127.0.0.1:3306 | Solo localhost (migraciones/copias) |
+| Postgres / ClickHouse | *(interno)* | No expuestos al host |
 
 ## Comandos por proyecto
 
@@ -143,6 +153,16 @@ pnpm prepare         # genera cliente Prisma (ejecutado tras pnpm install)
   API, seguridad, fases y decisiones técnicas (ADRs).
 - [`PROGRESS.md`](./PROGRESS.md) — estado actual y próximos pasos (contexto persistente entre
   sesiones).
+- [`docs/runbook.md`](./docs/runbook.md) — **operación**: arrancar/actualizar, copias de
+  seguridad y restauración, y acceso remoto con Tailscale.
+
+## Acceso remoto y copias de seguridad
+
+- **Host público:** la app se configura con una sola variable, `PUBLIC_HOST` en `.env`
+  (`localhost` por defecto). Cambiarla a la dirección/nombre de Tailscale permite entrar
+  desde fuera de casa sin abrir puertos ni dominio. Ver §2 del runbook.
+- **Copias de seguridad:** `./scripts/backup.sh` genera volcados de MySQL (app) y Postgres
+  (Hexclave) en `backups/`, con retención y verificación. Ver §3 del runbook.
 
 ## Convenciones de trabajo
 

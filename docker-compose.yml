@@ -77,6 +77,12 @@ services:
   hexclave-server:
     image: stackauth/server:latest
     restart: unless-stopped
+    # El seed oficial de Stack Auth no es idempotente para proyectos de
+    # "development environment" y tumba el contenedor al reiniciar. El wrapper
+    # omite el seed cuando el proyecto ya existe (ver docker/hexclave/entrypoint.sh).
+    entrypoint: ["/bin/sh", "/opt/hexclave/entrypoint.sh"]
+    volumes:
+      - ./docker/hexclave/entrypoint.sh:/opt/hexclave/entrypoint.sh:ro
     depends_on:
       postgres:
         condition: service_healthy

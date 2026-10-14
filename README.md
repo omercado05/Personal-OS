@@ -4,12 +4,14 @@ Aplicación web personal y privada para organizar proyectos, conocimiento/apunte
 recursos y módulos personales. Desarrollada y mantenida por una sola persona, desplegada en
 un servidor personal con Docker y Dockploy.
 
-> **Estado actual: Fase 9 completada.** Backend (Fastify + Prisma + MySQL) y frontend
-> (Next.js: dashboard, Knowledge, Projects, búsqueda global) operativos con autenticación
-> Hexclave self-hosted, endurecidos (rate limiting + headers), con backups y **accesibles
-> desde fuera de casa con Tailscale**. Siguiente: **Fase 10 — Despliegue en Dockploy**
-> (diferida; requiere servidor). Consulta `DEVELOPMENT_PLAN.md` para el plan, `PROGRESS.md`
-> para el estado y [`docs/runbook.md`](./docs/runbook.md) para la operación diaria.
+> **Estado actual: Fase 9 completada · Fase 11 en curso.** Backend (Fastify + Prisma + MySQL) y
+> frontend (Next.js: dashboard, Knowledge, Projects, búsqueda global) operativos con
+> autenticación Hexclave self-hosted, endurecidos (rate limiting + headers), con backups y
+> **accesibles desde fuera de casa con Tailscale**. En curso el **rediseño de interfaz «Bento
+> Neon»** (Fase 11; fundamentos ya aplicados: tokens, tipografía, movimiento y fondo ambiental).
+> Siguiente tras el rediseño: **Fase 10 — Despliegue en Dockploy** (diferida; requiere servidor).
+> Consulta `DEVELOPMENT_PLAN.md` para el plan, `PROGRESS.md` para el estado, `docs/design-system/`
+> para el sistema de diseño y [`docs/runbook.md`](./docs/runbook.md) para la operación diaria.
 
 ## Stack
 

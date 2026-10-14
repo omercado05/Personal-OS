@@ -210,8 +210,10 @@ Inicia sesión con tu usuario habitual.
   HTTP, así que el login funciona.
 - [x] La API de Hexclave responde `Access-Control-Allow-Origin: *`, así que no
   hay problema de CORS entre orígenes.
-- [ ] Pendiente: montarlo en tu tailnet real y confirmarlo (requiere tu cuenta
-  de Tailscale; ver §5.1).
+- [x] **Verificado en el *tailnet* real** (2026-10-14): nodo Tailscale
+  **`personal-os`** (`100.114.203.25`, este WSL2). Con `PUBLIC_HOST=100.114.203.25`,
+  el flujo completo (login → `GET /api/v1/dashboard` → dashboard) responde `200`
+  desde el origen de Tailscale, sin errores. Ver `PROGRESS.md` para el detalle.
 
 > Detalle conocido: en orígenes **no seguros** (`http://` sin `localhost`),
 > `crypto.randomUUID` no existe. Es el comportamiento del navegador y hasta ahora

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { Plus, Search } from "lucide-react";
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Pagination from "@/components/ui/Pagination";
+import Skeleton from "@/components/dashboard/Skeleton";
 import { PROJECT_STATUSES, PROJECT_STATUS_LABELS } from "@/lib/constants";
 import { deleteProject, listProjects } from "@/lib/projects";
 import type { ListMeta, Project } from "@/lib/types";
@@ -113,23 +115,31 @@ export default function ProjectsPage() {
     <div className="panel">
       <header className="panel__header">
         <div>
-          <p className="eyebrow">Módulo</p>
+          <p className="eyebrow">Proyectos</p>
           <h1>Projects</h1>
         </div>
-        <Link className="link-button" href="/projects/new">
-          + Nuevo proyecto
-        </Link>
+        <div className="row-actions">
+          <Link className="link-button small" href="/projects/new">
+            <Plus size={16} aria-hidden="true" />
+            Nuevo proyecto
+          </Link>
+        </div>
       </header>
 
       <form className="toolbar" onSubmit={applyFilters}>
-        <input
-          className="input"
-          type="search"
-          value={qInput}
-          onChange={(event) => setQInput(event.target.value)}
-          placeholder="Buscar por nombre o descripción…"
-          aria-label="Buscar proyectos"
-        />
+        <div className="input-group">
+          <span className="input-group__icon" aria-hidden="true">
+            <Search size={16} />
+          </span>
+          <input
+            className="input"
+            type="search"
+            value={qInput}
+            onChange={(event) => setQInput(event.target.value)}
+            placeholder="Buscar por nombre o descripción…"
+            aria-label="Buscar proyectos"
+          />
+        </div>
         <select
           className="select"
           value={status}
@@ -166,21 +176,41 @@ export default function ProjectsPage() {
         </div>
       ) : null}
 
-      {loading && !projects ? <p className="muted">Cargando…</p> : null}
+      {loading && !projects ? (
+        <ul className="data-list" aria-hidden="true">
+          {[0, 1, 2].map((key) => (
+            <li key={key} className="data-list__item">
+              <div className="data-list__main" style={{ flex: 1 }}>
+                <Skeleton className="skeleton--line" />
+                <Skeleton className="skeleton--line sm" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {!loading && !error && projects && projects.length === 0 ? (
         <div className="empty">
-          <p className="muted">
-            {hasFilters
-              ? "No hay proyectos que coincidan con los filtros."
-              : "Todavía no hay proyectos."}
-          </p>
+          <div className="empty__icon" aria-hidden="true">
+            <Plus size={18} />
+          </div>
+          <div className="empty__body">
+            <p className="empty__title">
+              {hasFilters ? "No hay resultados" : "Todavía no hay proyectos"}
+            </p>
+            <p className="muted">
+              {hasFilters
+                ? "No hay proyectos que coincidan con los filtros aplicados."
+                : "Crea el primer proyecto para dar seguimiento a una idea."}
+            </p>
+          </div>
           {hasFilters ? (
             <button type="button" className="ghost" onClick={clearFilters}>
               Limpiar filtros
             </button>
           ) : (
             <Link className="link-button" href="/projects/new">
+              <Plus size={16} aria-hidden="true" />
               Crear el primero
             </Link>
           )}

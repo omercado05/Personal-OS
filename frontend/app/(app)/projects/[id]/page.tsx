@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Skeleton from "@/components/dashboard/Skeleton";
 import { PROJECT_STATUS_LABELS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 import { deleteProject, getProject } from "@/lib/projects";
@@ -70,7 +72,9 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="panel">
-        <p className="muted">Cargando…</p>
+        <Skeleton className="skeleton--line sm" />
+        <Skeleton className="skeleton--line" />
+        <Skeleton className="skeleton--chart" />
       </div>
     );
   }
@@ -90,16 +94,22 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="panel">
+      <Link className="breadcrumb" href="/projects">
+        <ArrowLeft size={14} aria-hidden="true" />
+        Projects
+      </Link>
       <header className="panel__header">
         <div>
           <p className="eyebrow">Proyecto</p>
           <h1>{project.name}</h1>
         </div>
         <div className="row-actions">
-          <Link className="link-button" href={`/projects/${project.id}/edit`}>
+          <Link className="link-button small" href={`/projects/${project.id}/edit`}>
+            <Pencil size={16} aria-hidden="true" />
             Editar
           </Link>
-          <button type="button" className="ghost danger" onClick={() => setConfirming(true)}>
+          <button type="button" className="ghost small danger" onClick={() => setConfirming(true)}>
+            <Trash2 size={16} aria-hidden="true" />
             Eliminar
           </button>
         </div>

@@ -4,10 +4,27 @@ import { HexclaveHandler } from "@hexclave/next";
  * Ruta comodín que renderiza las páginas de autenticación de Hexclave
  * (`/handler/sign-in`, `/handler/sign-up`, `/handler/oauth-callback`, …).
  *
- * El componente vive dentro del `HexclaveProvider` del layout raíz, por lo que
- * reutiliza la misma instancia de `hexclaveClientApp` configurada en
- * `hexclave/client.ts`.
+ * Envolvemos el handler con el branding de «Bento Neon» sin perder su funcionalidad.
+ * El componente vive dentro de `HexclaveProvider` y `HexclaveTheme` del layout raíz.
  */
 export default function AuthHandlerPage() {
-  return <HexclaveHandler fullPage />;
+  return (
+    <main className="auth-shell">
+      <div className="auth-panel">
+        <header className="auth-brand">
+          <span className="brand-mark" aria-hidden="true">
+            ◆
+          </span>
+          <div className="auth-brand__text">
+            <p className="eyebrow">Personal OS</p>
+            <h1 className="auth-brand__title">Tu espacio personal</h1>
+            <p className="auth-brand__lead">Proyectos, conocimiento e ideas en un solo lugar.</p>
+          </div>
+        </header>
+        <div className="auth-card">
+          <HexclaveHandler fullPage={false} />
+        </div>
+      </div>
+    </main>
+  );
 }

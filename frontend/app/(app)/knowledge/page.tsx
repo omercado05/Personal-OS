@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { Plus, Search } from "lucide-react";
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Pagination from "@/components/ui/Pagination";
@@ -9,6 +10,7 @@ import { KNOWLEDGE_CATEGORIES, KNOWLEDGE_CATEGORY_LABELS } from "@/lib/constants
 import { deleteKnowledge, listKnowledge, listTags } from "@/lib/knowledge";
 import type { KnowledgeEntry, ListMeta, Tag } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import Skeleton from "@/components/dashboard/Skeleton";
 
 const PAGE_SIZE = 10;
 
@@ -136,23 +138,31 @@ export default function KnowledgePage() {
     <div className="panel">
       <header className="panel__header">
         <div>
-          <p className="eyebrow">Módulo</p>
+          <p className="eyebrow">Conocimiento</p>
           <h1>Knowledge</h1>
         </div>
-        <Link className="link-button" href="/knowledge/new">
-          + Nueva entrada
-        </Link>
+        <div className="row-actions">
+          <Link className="link-button small" href="/knowledge/new">
+            <Plus size={16} aria-hidden="true" />
+            Nueva entrada
+          </Link>
+        </div>
       </header>
 
       <form className="toolbar" onSubmit={applyFilters}>
-        <input
-          className="input"
-          type="search"
-          value={qInput}
-          onChange={(event) => setQInput(event.target.value)}
-          placeholder="Buscar por título o contenido…"
-          aria-label="Buscar entradas"
-        />
+        <div className="input-group">
+          <span className="input-group__icon" aria-hidden="true">
+            <Search size={16} />
+          </span>
+          <input
+            className="input"
+            type="search"
+            value={qInput}
+            onChange={(event) => setQInput(event.target.value)}
+            placeholder="Buscar por título o contenido…"
+            aria-label="Buscar entradas"
+          />
+        </div>
         <select
           className="select"
           value={category}
@@ -206,21 +216,41 @@ export default function KnowledgePage() {
         </div>
       ) : null}
 
-      {loading && !entries ? <p className="muted">Cargando…</p> : null}
+      {loading && !entries ? (
+        <ul className="data-list" aria-hidden="true">
+          {[0, 1, 2].map((key) => (
+            <li key={key} className="data-list__item">
+              <div className="data-list__main" style={{ flex: 1 }}>
+                <Skeleton className="skeleton--line" />
+                <Skeleton className="skeleton--line sm" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {!loading && !error && entries && entries.length === 0 ? (
         <div className="empty">
-          <p className="muted">
-            {hasFilters
-              ? "No hay entradas que coincidan con los filtros."
-              : "Todavía no hay entradas de conocimiento."}
-          </p>
+          <div className="empty__icon" aria-hidden="true">
+            <Plus size={18} />
+          </div>
+          <div className="empty__body">
+            <p className="empty__title">
+              {hasFilters ? "No hay resultados" : "Todavía no hay entradas de conocimiento"}
+            </p>
+            <p className="muted">
+              {hasFilters
+                ? "No hay entradas que coincidan con los filtros aplicados."
+                : "Crea tu primera entrada para empezar a organizar el conocimiento."}
+            </p>
+          </div>
           {hasFilters ? (
             <button type="button" className="ghost" onClick={clearFilters}>
               Limpiar filtros
             </button>
           ) : (
             <Link className="link-button" href="/knowledge/new">
+              <Plus size={16} aria-hidden="true" />
               Crear la primera
             </Link>
           )}

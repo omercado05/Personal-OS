@@ -15,6 +15,10 @@ export function registerSecurityHeaders(app: FastifyInstance): void {
     reply.header("Referrer-Policy", "no-referrer");
     reply.header("X-DNS-Prefetch-Control", "off");
     reply.header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+    // Sin navegador en el otro lado: desactivamos las APIs sensibles del device.
+    reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+    // Respuestas con datos privados de un solo usuario: nada de cachés intermedias.
+    reply.header("Cache-Control", "no-store");
 
     // HSTS solo tiene sentido sobre HTTPS (producción, detrás de Traefik).
     if (env.nodeEnv === "production") {

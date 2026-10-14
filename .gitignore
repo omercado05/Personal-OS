@@ -36,3 +36,6 @@ Thumbs.db
 
 # Docker
 *.pid
+
+# Copias de seguridad locales (ver docs/runbook.md)
+backups/

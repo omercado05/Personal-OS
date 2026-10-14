@@ -6,6 +6,12 @@
 #                        + `pnpm dev` en backend/ y frontend/ (hot-reload)
 #   Integración (prod):  docker compose up --build
 #
+# Host público (navegador): todas las URLs externas (frontend, backend, Hexclave)
+# se DERIVAN de `PUBLIC_HOST` + `PUBLIC_SCHEME` (ver .env). Para exponer la app
+# fuera de casa basta con cambiar `PUBLIC_HOST` (p. ej. a la IP/nombre de
+# Tailscale) y reconstruir el frontend, que incrusta las `NEXT_PUBLIC_*` en el
+# bundle en tiempo de build.
+#
 # PostgreSQL y ClickHouse NO se publican al host (solo red interna).
 # MySQL SÍ se publica, pero solo en 127.0.0.1, para poder ejecutar `pnpm dev` y
 # las migraciones de Prisma (`pnpm db:migrate`) desde el host. En el contenedor
@@ -75,7 +81,10 @@ services:
 
   # --- Hexclave (Stack Auth) self-hosted: dashboard (8101) + API (8102) ------
   hexclave-server:
-    image: stackauth/server:latest
+    # Fijada por digest (no por `latest`) para que un `docker compose pull` no
+    # introduzca cambios de esquema silenciosos (R8). Actualizar es deliberado:
+    #   docker pull stackauth/server:latest && docker inspect --format '{{index .RepoDigests 0}}' stackauth/server:latest
+    image: stackauth/server@sha256:086450b0637e0ede27229ef492ff4a95e7db23b8d00ba730d468e995b07bdc1f
     restart: unless-stopped
     # El seed oficial de Stack Auth no es idempotente para proyectos de
     # "development environment" y tumba el contenedor al reiniciar. El wrapper
@@ -89,8 +98,8 @@ services:
       clickhouse:
         condition: service_healthy
     environment:
-      NEXT_PUBLIC_STACK_API_URL: ${HEXCLAVE_PUBLIC_API_URL}
-      NEXT_PUBLIC_STACK_DASHBOARD_URL: ${HEXCLAVE_PUBLIC_DASHBOARD_URL}
+      NEXT_PUBLIC_STACK_API_URL: "${PUBLIC_SCHEME:-http}://${PUBLIC_HOST:-localhost}:8102"
+      NEXT_PUBLIC_STACK_DASHBOARD_URL: "${PUBLIC_SCHEME:-http}://${PUBLIC_HOST:-localhost}:8101"
       HEXCLAVE_TRUSTED_PROXY: ${HEXCLAVE_TRUSTED_PROXY:-}
       STACK_DATABASE_CONNECTION_STRING: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       STACK_SERVER_SECRET: ${STACK_SERVER_SECRET}
@@ -137,16 +146,21 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       APP_VERSION: "0.1.0"
       DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
-      HEXCLAVE_API_URL: ${HEXCLAVE_PUBLIC_API_URL}
-      HEXCLAVE_INTERNAL_API_URL: ${HEXCLAVE_INTERNAL_API_URL}
+      HEXCLAVE_API_URL: "${PUBLIC_SCHEME:-http}://${PUBLIC_HOST:-localhost}:8102"
+      # Server-to-server dentro de la red de Docker: no depende del host público.
+      HEXCLAVE_INTERNAL_API_URL: http://hexclave-server:8102
       HEXCLAVE_PROJECT_ID: ${HEXCLAVE_PROJECT_ID:-}
       HEXCLAVE_PUBLISHABLE_CLIENT_KEY: ${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-}
       HEXCLAVE_SECRET_SERVER_KEY: ${HEXCLAVE_SECRET_SERVER_KEY:-}
-      # `iss` es la URL pública (debe coincidir con el claim del token). El JWKS
-      # NO se fija aquí: el backend lo deriva de la URL interna + project ID.
+      # `iss` se deriva de HEXCLAVE_API_URL + project ID (deja HEXCLAVE_ISSUER
+      # vacío salvo que necesites sobreescribirlo; ver DEVELOPMENT_PLAN.md §8.3).
+      # El JWKS NO se fija aquí: el backend lo deriva de la URL interna.
       HEXCLAVE_ISSUER: ${HEXCLAVE_ISSUER:-}
       HEXCLAVE_AUDIENCE: ${HEXCLAVE_AUDIENCE:-}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      # Se aceptan AMBOS orígenes: el local (localhost) y el público (Tailscale).
+      # Así la app funciona igual si la abres desde el propio equipo o desde
+      # fuera, sin tocar la configuración.
+      CORS_ORIGIN: "http://localhost:3000,${PUBLIC_SCHEME:-http}://${PUBLIC_HOST:-localhost}:3000"
     ports:
       - "4000:4000"
     healthcheck:
@@ -164,8 +178,8 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
-        NEXT_PUBLIC_HEXCLAVE_API_URL: ${HEXCLAVE_PUBLIC_API_URL:-http://localhost:8102}
+        NEXT_PUBLIC_API_URL: "${PUBLIC_SCHEME:-http}://${PUBLIC_HOST:-localhost}:4000"
+        NEXT_PUBLIC_HEXCLAVE_API_URL: "${PUBLIC_SCHEME:-http}://${PUBLIC_HOST:-localhost}:8102"
         NEXT_PUBLIC_HEXCLAVE_PROJECT_ID: ${HEXCLAVE_PROJECT_ID:-}
         NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY: ${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-}
     restart: unless-stopped

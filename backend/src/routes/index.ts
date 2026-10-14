@@ -3,6 +3,7 @@ import type { FastifyInstance, preHandlerHookHandler } from "fastify";
 import { resolveAuthConfig } from "../auth/config.js";
 import { createRemoteTokenVerifier } from "../auth/jwt-verifier.js";
 import { createAuthHook } from "../middleware/auth.js";
+import type { RateLimits } from "../middleware/rate-limit.js";
 import { createHealthService, type HealthService } from "../services/health.service.js";
 import { createKnowledgeService, type KnowledgeService } from "../services/knowledge.service.js";
 import { createProjectService, type ProjectService } from "../services/project.service.js";
@@ -51,7 +52,11 @@ export function createRouteDependencies(): RouteDependencies {
  * Registro central de rutas. Cada módulo (knowledge, projects, tags, ...) se
  * añade aquí en su fase correspondiente.
  */
-export function registerRoutes(app: FastifyInstance, deps: RouteDependencies): void {
+export function registerRoutes(
+  app: FastifyInstance,
+  deps: RouteDependencies,
+  rateLimits: RateLimits,
+): void {
   app.register(healthRoutes(deps.health), { prefix: API_PREFIX });
   app.register(meRoutes(deps.auth), { prefix: API_PREFIX });
   app.register(knowledgeRoutes({ auth: deps.auth, service: deps.knowledge }), {
@@ -60,7 +65,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDependencies): v
   app.register(projectRoutes({ auth: deps.auth, service: deps.projects }), {
     prefix: API_PREFIX,
   });
-  app.register(searchRoutes({ auth: deps.auth, service: deps.search }), {
+  app.register(searchRoutes({ auth: deps.auth, service: deps.search, rateLimits }), {
     prefix: API_PREFIX,
   });
 }

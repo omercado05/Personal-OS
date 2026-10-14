@@ -29,6 +29,8 @@ describe("cabeceras de seguridad", () => {
     expect(response.headers["x-frame-options"]).toBe("DENY");
     expect(response.headers["referrer-policy"]).toBe("no-referrer");
     expect(response.headers["content-security-policy"]).toContain("default-src 'none'");
+    expect(response.headers["permissions-policy"]).toContain("camera=()");
+    expect(response.headers["cache-control"]).toBe("no-store");
   });
 });
 

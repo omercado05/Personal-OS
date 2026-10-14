@@ -5,7 +5,12 @@ import { buildApp } from "../app.js";
 import type { TokenVerifier } from "../auth/jwt-verifier.js";
 import { unauthorized } from "../lib/errors.js";
 import { createAuthHook } from "../middleware/auth.js";
-import type { DashboardDto, SearchResultDto, SearchService } from "../services/search.service.js";
+import type {
+  DashboardDto,
+  DashboardMetricsDto,
+  SearchResultDto,
+  SearchService,
+} from "../services/search.service.js";
 import type { AuthenticatedUser, UserService } from "../services/user.service.js";
 
 const users: UserService = {
@@ -54,6 +59,15 @@ function createFakeService(overrides: Partial<SearchService> = {}): SearchServic
       const result: DashboardDto = {
         recentKnowledge: [],
         recentProjects: [],
+      };
+      return result;
+    },
+    async metrics(_userId) {
+      const result: DashboardMetricsDto = {
+        totals: { knowledge: 0, projects: 0, tags: 0, categories: 0 },
+        knowledgeByCategory: [],
+        projectsByStatus: [],
+        activity: [],
       };
       return result;
     },
@@ -124,5 +138,40 @@ describe("rutas de search y dashboard (protegidas)", () => {
     });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ data: { recentKnowledge: [], recentProjects: [] } });
+  });
+
+  it("GET /dashboard/metrics requiere token", async () => {
+    app = buildAppWith(createFakeService());
+    const response = await app.inject({ method: "GET", url: "/api/v1/dashboard/metrics" });
+    expect(response.statusCode).toBe(401);
+  });
+
+  it("GET /dashboard/metrics devuelve agregados", async () => {
+    app = buildAppWith(
+      createFakeService({
+        async metrics() {
+          return {
+            totals: { knowledge: 3, projects: 2, tags: 1, categories: 2 },
+            knowledgeByCategory: [{ category: "Programming", count: 3 }],
+            projectsByStatus: [{ status: "idea", count: 2 }],
+            activity: [{ month: "2026-10", knowledge: 3, projects: 2 }],
+          };
+        },
+      }),
+    );
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/dashboard/metrics",
+      headers: authHeader,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      data: {
+        totals: { knowledge: 3, projects: 2, tags: 1, categories: 2 },
+        knowledgeByCategory: [{ category: "Programming", count: 3 }],
+        projectsByStatus: [{ status: "idea", count: 2 }],
+        activity: [{ month: "2026-10", knowledge: 3, projects: 2 }],
+      },
+    });
   });
 });

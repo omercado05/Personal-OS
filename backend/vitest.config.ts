@@ -18,8 +18,7 @@ export default defineConfig({
       HEXCLAVE_PROJECT_ID: "test-project",
       HEXCLAVE_ISSUER: "http://localhost:8102/api/v1/projects/test-project",
       HEXCLAVE_AUDIENCE: "test-project",
-      HEXCLAVE_JWKS_URL:
-        "http://localhost:8102/api/v1/projects/test-project/.well-known/jwks.json",
+      HEXCLAVE_JWKS_URL: "http://localhost:8102/api/v1/projects/test-project/.well-known/jwks.json",
     },
   },
 });

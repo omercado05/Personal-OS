@@ -1,6 +1,7 @@
 import type { KnowledgeEntry, Project } from "../generated/prisma/client.js";
 import {
   createSearchRepository,
+  type DashboardMetrics,
   type SearchRepository,
 } from "../repositories/search.repository.js";
 import type { SearchQuery } from "../schemas/search.schema.js";
@@ -52,9 +53,13 @@ export interface DashboardDto {
   recentProjects: DashboardProjectItem[];
 }
 
+/** Métricas agregadas del panel (F11.3). */
+export type DashboardMetricsDto = DashboardMetrics;
+
 export interface SearchService {
   search(userId: bigint, query: SearchQuery): Promise<SearchResultDto>;
   dashboard(userId: bigint, limit?: number): Promise<DashboardDto>;
+  metrics(userId: bigint, months?: number): Promise<DashboardMetricsDto>;
 }
 
 export function createSearchService(
@@ -127,6 +132,10 @@ export function createSearchService(
           }),
         ),
       };
+    },
+
+    async metrics(userId, months = 6) {
+      return repository.metrics(userId, months);
     },
   };
 }

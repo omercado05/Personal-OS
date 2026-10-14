@@ -48,3 +48,19 @@ export interface ListResponse<T> {
 export interface ItemResponse<T> {
   data: T;
 }
+
+/** Totales del panel (F11.3). */
+export interface DashboardTotals {
+  knowledge: number;
+  projects: number;
+  tags: number;
+  categories: number;
+}
+
+/** Métricas agregadas del panel devueltas por `GET /api/v1/dashboard/metrics`. */
+export interface DashboardMetrics {
+  totals: DashboardTotals;
+  knowledgeByCategory: { category: string; count: number }[];
+  projectsByStatus: { status: string; count: number }[];
+  activity: { month: string; knowledge: number; projects: number }[];
+}

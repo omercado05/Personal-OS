@@ -16,6 +16,7 @@ function requireUserId(request: FastifyRequest): bigint {
 export interface SearchController {
   search(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply>;
   dashboard(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply>;
+  metrics(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply>;
   tags(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply>;
 }
 
@@ -39,6 +40,12 @@ export function createSearchController(service: SearchService): SearchController
     async dashboard(request, reply) {
       const userId = requireUserId(request);
       const result = await service.dashboard(userId);
+      return reply.send(success(result));
+    },
+
+    async metrics(request, reply) {
+      const userId = requireUserId(request);
+      const result = await service.metrics(userId);
       return reply.send(success(result));
     },
 

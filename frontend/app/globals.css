@@ -32,6 +32,9 @@
   --accent-08: rgba(34, 211, 238, 0.08);
   --accent-12: rgba(34, 211, 238, 0.12);
   --accent-35: rgba(34, 211, 238, 0.35);
+  --accent-2-08: rgba(34, 197, 94, 0.08);
+  --accent-2-12: rgba(34, 197, 94, 0.12);
+  --accent-2-35: rgba(34, 197, 94, 0.35);
 
   /* Semánticos */
   --ok: #4ade80;
@@ -1293,5 +1296,239 @@ button,
 
   body::before {
     animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   F11.3 · Dashboard «Bento Neon»: métricas, gráficos y skeletons.
+   --------------------------------------------------------------------------- */
+
+/* Rejilla de tarjetas de métricas. */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-4);
+}
+
+.stat-card {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* Filo luminoso superior según el tono. */
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.7;
+}
+
+.stat-card--accent-2::before {
+  background: linear-gradient(90deg, var(--accent-2), transparent);
+}
+
+.stat-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  background: var(--accent-08);
+  border: 1px solid var(--accent-35);
+}
+
+.stat-card--accent-2 .stat-card__icon {
+  color: var(--accent-2);
+  background: var(--accent-2-12);
+  border-color: var(--accent-2-35);
+}
+
+.stat-card__value {
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif, sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card__label {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Rejilla de gráficos: actividad ancha y dos gráficos pequeños. */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1.15rem 1.25rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+}
+
+.chart-card--wide {
+  grid-column: 1 / -1;
+}
+
+.chart-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.chart-card__head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Contenedores de Recharts (altura fija). */
+.chart {
+  width: 100%;
+  min-width: 0;
+}
+
+.chart--activity {
+  height: 260px;
+}
+
+/* Donut + leyenda */
+.donut {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.chart--donut {
+  position: relative;
+  height: 200px;
+  flex: 1 1 180px;
+}
+
+.chart__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.chart__center-value {
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.chart__center-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  flex: 1 1 150px;
+  min-width: 0;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.legend__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.legend__name {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend__value {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart--bars {
+  height: 260px;
+}
+
+/* Skeletons de carga */
+.skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 70%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s var(--ease-in-out) infinite;
+}
+
+.skeleton--stat {
+  height: 116px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton--chart {
+  height: 260px;
+  border-radius: var(--radius);
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 899px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart--activity,
+  .chart--bars {
+    height: 220px;
   }
 }

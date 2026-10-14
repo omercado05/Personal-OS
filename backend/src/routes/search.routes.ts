@@ -22,5 +22,6 @@ export function searchRoutes(deps: {
       controller.search,
     );
     app.get("/dashboard", { preHandler: deps.auth }, controller.dashboard);
+    app.get("/dashboard/metrics", { preHandler: deps.auth }, controller.metrics);
   };
 }

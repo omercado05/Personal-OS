@@ -1,17 +1,88 @@
+/* ===========================================================================
+   Design tokens — «Bento Neon»
+   Fuente de verdad: docs/design-system/personal-os/MASTER.md
+   Base casi negra (OLED), acento cian neón, secundario verde neón, superficies
+   de cristal, y tipografías Space Grotesk + Inter + JetBrains Mono.
+   Los nombres de variable antiguos (--bg, --surface, --accent…) se conservan
+   como *alias semánticos* para no romper el resto de la hoja.
+   =========================================================================== */
+
 :root {
   color-scheme: dark;
-  --bg: #0b0d12;
-  --surface: #141821;
-  --surface-border: #232a37;
-  --text: #e7ebf3;
-  --text-muted: #9aa4b6;
-  --accent: #7c9cff;
+
+  /* Superficies */
+  --bg: #07080c;
+  --bg-2: #0a0c12;
+  --surface: #10131c;
+  --surface-2: #161a26;
+  --surface-sunken: #0b0e15;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --surface-border-strong: rgba(255, 255, 255, 0.16);
+  --glass: rgba(255, 255, 255, 0.05);
+
+  /* Texto */
+  --text: #e8edf7;
+  --text-muted: #8b95a9;
+  --text-faint: #606a7c;
+
+  /* Acentos */
+  --accent: #22d3ee;
+  --accent-2: #22c55e;
+  --on-accent: #04141a;
+  --accent-08: rgba(34, 211, 238, 0.08);
+  --accent-12: rgba(34, 211, 238, 0.12);
+  --accent-35: rgba(34, 211, 238, 0.35);
+
+  /* Semánticos */
   --ok: #4ade80;
-  --pending: #f5b942;
+  --pending: #fbbf24;
+  --danger: #f87171;
+  --danger-border: rgba(248, 113, 113, 0.35);
+  --danger-bg: rgba(248, 113, 113, 0.1);
+
+  /* Foco accesible */
+  --focus-ring: #22d3ee;
+
+  /* Radios */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* Espaciado */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Elevación y brillo */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 28px 70px rgba(0, 0, 0, 0.55);
+  --glow-accent: 0 0 0 1px var(--accent-35), 0 0 28px rgba(34, 211, 238, 0.22);
+
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 480ms;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  background-color: var(--bg);
+  -webkit-text-size-adjust: 100%;
 }
 
 html,
@@ -22,9 +93,9 @@ body {
 
 body {
   min-height: 100vh;
-  background: radial-gradient(circle at 20% -10%, #1a2233 0%, var(--bg) 55%);
   color: var(--text);
   font-family:
+    var(--font-sans),
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -34,6 +105,34 @@ body {
     Arial,
     sans-serif;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fondo ambiental «aurora»: muy sutil y de movimiento lento (respeta
+   prefers-reduced-motion más abajo). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -15% -10%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 32% at 12% 0%, rgba(34, 211, 238, 0.16) 0%, transparent 70%),
+    radial-gradient(34% 30% at 88% 8%, rgba(34, 197, 94, 0.12) 0%, transparent 70%),
+    radial-gradient(60% 55% at 50% 110%, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+  filter: blur(24px);
+  will-change: transform;
+  animation: aurora 32s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes aurora {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-3%, 2%, 0) scale(1.12);
+  }
 }
 
 .page {
@@ -104,7 +203,7 @@ h1 {
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;
-  background: #0d1119;
+  background: var(--surface-sunken);
   border: 1px solid var(--surface-border);
   border-radius: 6px;
   padding: 0.1rem 0.35rem;
@@ -152,7 +251,7 @@ button:disabled {
 
 .error {
   margin: 0 0 1.25rem;
-  color: #ff9a9a;
+  color: var(--danger);
 }
 
 .result {
@@ -238,13 +337,13 @@ button:disabled {
 
 .sidebar__nav a:hover {
   color: var(--text);
-  background: rgba(124, 156, 255, 0.08);
+  background: rgba(34, 211, 238, 0.08);
 }
 
 .sidebar__nav a.active {
   color: var(--text);
-  background: rgba(124, 156, 255, 0.14);
-  border-color: rgba(124, 156, 255, 0.35);
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.35);
 }
 
 .sidebar__footer {
@@ -379,8 +478,8 @@ button:disabled {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--accent);
-  background: rgba(124, 156, 255, 0.12);
-  border: 1px solid rgba(124, 156, 255, 0.35);
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.35);
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
   white-space: nowrap;
@@ -391,7 +490,7 @@ button:disabled {
 }
 
 .error {
-  color: #ff8b8b;
+  color: var(--danger);
 }
 
 .small {
@@ -404,10 +503,10 @@ button:disabled {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid #6b2b2b;
-  background: #2a1616;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
   border-radius: 10px;
-  color: #ffb4b4;
+  color: var(--danger);
 }
 
 button.small {
@@ -438,9 +537,10 @@ button.small {
   padding: 0.55rem 0.85rem;
 }
 
-.search__input:focus {
+.search__input:focus-visible {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-35);
 }
 
 .search__kind {
@@ -484,7 +584,7 @@ button.small {
 }
 
 .search__results a:hover {
-  background: rgba(124, 201, 255, 0.08);
+  background: rgba(34, 211, 238, 0.08);
 }
 
 .search__title {
@@ -534,7 +634,7 @@ button.small {
   align-items: center;
   gap: 0.35rem;
   font: inherit;
-  color: #0b0d12;
+  color: var(--on-accent);
   background: var(--accent);
   border: 1px solid transparent;
   border-radius: 10px;
@@ -570,28 +670,28 @@ button.small {
 
 .link-button.danger {
   background: transparent;
-  border-color: #6b2b2b;
-  color: #ff9a9a;
+  border-color: var(--danger-border);
+  color: var(--danger);
 }
 
 .link-button.danger:hover {
-  background: #2a1616;
+  background: var(--danger-bg);
   filter: none;
 }
 
 /* Botones nativos primarios: tinta oscura sobre el acento (buen contraste). */
 button.primary {
-  color: #0b0d12;
+  color: var(--on-accent);
 }
 
 button.danger {
   background: transparent;
-  border-color: #6b2b2b;
-  color: #ff9a9a;
+  border-color: var(--danger-border);
+  color: var(--danger);
 }
 
 button.danger:hover:not(:disabled) {
-  background: #2a1616;
+  background: var(--danger-bg);
   filter: none;
 }
 
@@ -625,11 +725,12 @@ button.danger:hover:not(:disabled) {
   min-height: 8rem;
 }
 
-.input:focus,
-.select:focus,
-.textarea:focus {
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-35);
 }
 
 .field {
@@ -645,7 +746,7 @@ button.danger:hover:not(:disabled) {
 }
 
 .field .req {
-  color: #ff9a9a;
+  color: var(--danger);
 }
 
 .hint {
@@ -657,7 +758,7 @@ button.danger:hover:not(:disabled) {
 .field-error {
   margin: 0;
   font-size: 0.8rem;
-  color: #ff9a9a;
+  color: var(--danger);
 }
 
 .form {
@@ -753,8 +854,8 @@ button.danger:hover:not(:disabled) {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--accent);
-  background: rgba(124, 156, 255, 0.12);
-  border: 1px solid rgba(124, 156, 255, 0.35);
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.35);
   border-radius: 999px;
   padding: 0.1rem 0.55rem;
   white-space: nowrap;
@@ -774,8 +875,8 @@ button.danger:hover:not(:disabled) {
 
 .badge--in_progress {
   color: var(--accent);
-  background: rgba(124, 156, 255, 0.12);
-  border-color: rgba(124, 156, 255, 0.35);
+  background: rgba(34, 211, 238, 0.12);
+  border-color: rgba(34, 211, 238, 0.35);
 }
 
 .badge--paused {
@@ -868,7 +969,7 @@ button.danger:hover:not(:disabled) {
 .content-block {
   margin: 0;
   padding: 1rem 1.1rem;
-  background: #0d1119;
+  background: var(--surface-sunken);
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   white-space: pre-wrap;
@@ -916,5 +1017,62 @@ button.danger:hover:not(:disabled) {
 
   .data-list__actions {
     width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   F11.1 · Fundamentos «Bento Neon»: tipografía, foco accesible y movimiento.
+   --------------------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4,
+.sidebar__brand,
+.display {
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+code,
+kbd,
+samp,
+.result dd {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Anillo de foco visible y consistente para navegación por teclado. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Botones: radio y transición con los tokens de movimiento. */
+button,
+.link-button {
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out),
+    filter var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+
+/* Respeta a quien prefiere menos movimiento: apaga animaciones no esenciales. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  body::before {
+    animation: none;
   }
 }

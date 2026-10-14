@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -84,15 +85,18 @@ export default function GlobalSearch() {
 
   return (
     <div className="search" ref={containerRef}>
-      <input
-        type="search"
-        className="search__input"
-        aria-label="Buscar"
-        placeholder="Buscar en notas y proyectos…"
-        value={term}
-        onChange={(event) => setTerm(event.target.value)}
-        onFocus={() => setOpen(true)}
-      />
+      <div className="search__field">
+        <Search className="search__icon" size={16} strokeWidth={2} aria-hidden="true" />
+        <input
+          type="search"
+          className="search__input"
+          aria-label="Buscar"
+          placeholder="Buscar en notas y proyectos…"
+          value={term}
+          onChange={(event) => setTerm(event.target.value)}
+          onFocus={() => setOpen(true)}
+        />
+      </div>
 
       {showResults ? (
         <div className="search__results">

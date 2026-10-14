@@ -105,6 +105,11 @@ crontab -e
 30 3 * * * cd /ruta/al/repo && ./scripts/backup.sh >> backups/backup.log 2>&1
 ```
 
+> **Estado en este equipo:** ya está programado (crontab de `omercado`), con la
+> entrada anterior y `PATH=/usr/local/bin:/usr/bin:/bin`. Comprobar con
+> `crontab -l`; los mensajes van a `backups/backup.log`. El servicio `cron` debe
+> estar activo (`systemctl status cron`) — en WSL2 con systemd lo está.
+
 > Copia también `backups/` fuera de este equipo de vez en cuando (un disco
 > externo o la nube): un backup en el mismo disco no protege ante un fallo del
 > disco.
@@ -218,8 +223,37 @@ Inicia sesión con tu usuario habitual.
 > Detalle conocido: en orígenes **no seguros** (`http://` sin `localhost`),
 > `crypto.randomUUID` no existe. Es el comportamiento del navegador y hasta ahora
 > **no impide** ni el login ni el uso (verificado). Si algún día molesta, la
-> solución limpia es servir por **HTTPS** con un certificado de Tailscale
-> (`tailscale cert` / `tailscale serve`) y poner `PUBLIC_SCHEME=https`.
+> solución limpia es servir por **HTTPS** con un certificado de Tailscale; pasos
+> concretos en **§5.4**.
+
+### 5.4. HTTPS con Tailscale (evaluado y diferido)
+
+**Decisión (2026-10-14): de momento se usa HTTP dentro del *tailnet*.** Tailscale
+ya cifra el tráfico extremo a extremo con WireGuard, así que el HTTP **viaja
+cifrado**; el HTTPS solo aporta, además, contexto seguro en el navegador (APIs
+como `crypto.randomUUID`, cookies `Secure`). Se difiere por su coste.
+
+Si más adelante se quiere HTTPS, los pasos son:
+
+1. Habilitar **HTTPS Certificates** en el panel
+   (<https://login.tailscale.com/admin/dns>) y hacer *operator* al usuario:
+   `sudo tailscale set --operator=$USER` (o ejecutar `serve`/`cert` con `sudo`).
+2. Servir los **tres** servicios por HTTPS (si no, el navegador bloquea por
+   *mixed content* frontend ↔ API):
+   ```bash
+   tailscale serve --bg --https=3000  http://127.0.0.1:3000   # frontend
+   tailscale serve --bg --https=4000  http://127.0.0.1:4000   # backend
+   tailscale serve --bg --https=8102  http://127.0.0.1:8102   # API de Hexclave
+   ```
+   Esto obliga a publicar los puertos de Docker en `127.0.0.1` (no `0.0.0.0`)
+   para que Tailscale pueda escuchar en el IP del *tailnet*; las URLs no cambian
+   de puerto, solo `http`→`https`.
+3. En `.env`: `PUBLIC_SCHEME=https` y `PUBLIC_HOST=personal-os.<tailnet>.ts.net`
+   (el **nombre MagicDNS**: los certificados son para el nombre, no para el IP).
+   Reconstruir el frontend y recrear `backend` y `hexclave-server` (§2).
+
+> Con HTTPS conviene `--accept-dns=true` (MagicDNS) para que el propio equipo
+> resuelva el nombre `.ts.net` que incrusta el bundle.
 
 ---
 

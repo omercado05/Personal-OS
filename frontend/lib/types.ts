@@ -1,4 +1,4 @@
-import type { KnowledgeCategory, ProjectStatus } from "./constants";
+import type { KnowledgeCategory, ProjectStatus, TaskPriority, TaskStatus } from "./constants";
 
 /** Entrada de conocimiento tal como la devuelve la API (`id` es un string). */
 export interface KnowledgeEntry {
@@ -57,10 +57,40 @@ export interface DashboardTotals {
   categories: number;
 }
 
+/** Referencia mínima al proyecto vinculado a una tarea. */
+export interface TaskProjectRef {
+  id: string;
+  name: string;
+}
+
+/** Tarea tal como la devuelve la API (`id` es un string). */
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueAt: string | null;
+  completedAt: string | null;
+  project: TaskProjectRef | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Conteo de tareas pendientes por día (`GET /api/v1/tasks?groupByDay=true`). */
+export interface TaskDayCount {
+  date: string;
+  count: number;
+}
+
 /** Métricas agregadas del panel devueltas por `GET /api/v1/dashboard/metrics`. */
 export interface DashboardMetrics {
   totals: DashboardTotals;
   knowledgeByCategory: { category: string; count: number }[];
   projectsByStatus: { status: string; count: number }[];
   activity: { month: string; knowledge: number; projects: number }[];
+  /** Tareas pendientes que vencen hoy. */
+  tasksDueToday: number;
+  /** Tareas pendientes vencidas (antes de ahora). */
+  tasksOverdue: number;
 }

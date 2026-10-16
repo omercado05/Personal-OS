@@ -25,6 +25,7 @@ model User {
 
   knowledgeEntries KnowledgeEntry[]
   projects         Project[]
+  tasks            Task[]
 
   @@map("users")
 }
@@ -85,6 +86,7 @@ model Project {
 
   user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   technologies ProjectTechnology[]
+  tasks        Task[]
 
   @@index([userId, status])
   @@map("projects")
@@ -100,3 +102,35 @@ model ProjectTechnology {
   @@id([projectId, name])
   @@map("project_technologies")
 }
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Task {
+  id          BigInt        @id @default(autoincrement())
+  userId      BigInt        @map("user_id")
+  projectId   BigInt?       @map("project_id")
+  title       String        @db.VarChar(255)
+  description String?       @db.Text
+  status      TaskStatus    @default(PENDING)
+  priority    TaskPriority  @default(MEDIUM)
+  dueAt       DateTime?     @map("due_at")
+  completedAt DateTime?     @map("completed_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, dueAt])
+  @@index([userId, projectId])
+  @@map("tasks")
+}
+

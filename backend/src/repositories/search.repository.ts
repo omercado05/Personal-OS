@@ -57,6 +57,10 @@ export interface DashboardMetrics {
   knowledgeByCategory: { category: string; count: number }[];
   projectsByStatus: { status: string; count: number }[];
   activity: { month: string; knowledge: number; projects: number }[];
+  /** Tareas pendientes que vencen hoy. */
+  tasksDueToday: number;
+  /** Tareas pendientes vencidas (antes de ahora). */
+  tasksOverdue: number;
 }
 
 export interface SearchRepository {
@@ -263,6 +267,16 @@ export function createSearchRepository(): SearchRepository {
         }
       }
 
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      const [tasksDueToday, tasksOverdue] = await Promise.all([
+        prisma.task.count({
+          where: { userId, status: "PENDING", dueAt: { gte: todayStart, lte: todayEnd } },
+        }),
+        prisma.task.count({ where: { userId, status: "PENDING", dueAt: { lt: new Date() } } }),
+      ]);
       return {
         totals: {
           knowledge: knowledgeTotal,
@@ -281,6 +295,8 @@ export function createSearchRepository(): SearchRepository {
           knowledge: value.knowledge,
           projects: value.projects,
         })),
+        tasksDueToday,
+        tasksOverdue,
       };
     },
   };

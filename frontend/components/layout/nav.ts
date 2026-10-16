@@ -1,4 +1,10 @@
-import { BookOpen, FolderKanban, LayoutDashboard, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  CalendarClock,
+  FolderKanban,
+  LayoutDashboard,
+  type LucideIcon,
+} from "lucide-react";
 
 /** Elemento de navegación principal del shell. */
 export interface NavItem {
@@ -11,6 +17,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },
+  { href: "/tasks", label: "Tasks", icon: CalendarClock },
   { href: "/projects", label: "Projects", icon: FolderKanban },
 ];
 

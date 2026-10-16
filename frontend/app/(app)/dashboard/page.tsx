@@ -1,7 +1,16 @@
 "use client";
 
 import { useUser } from "@hexclave/next";
-import { BookOpen, FolderKanban, Layers, Plus, RefreshCw, Tags } from "lucide-react";
+import {
+  AlertTriangle,
+  BookOpen,
+  CalendarClock,
+  FolderKanban,
+  Layers,
+  Plus,
+  RefreshCw,
+  Tags,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -10,6 +19,8 @@ import CategoryBars from "@/components/dashboard/CategoryBars";
 import Skeleton from "@/components/dashboard/Skeleton";
 import StatCard from "@/components/dashboard/StatCard";
 import StatusDonut from "@/components/dashboard/StatusDonut";
+import DashboardCalendar from "@/components/tasks/DashboardCalendar";
+import DayTasksCard from "@/components/tasks/DayTasksCard";
 import { KNOWLEDGE_CATEGORY_LABELS, PROJECT_STATUS_LABELS } from "@/lib/constants";
 import type { DashboardMetrics } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
@@ -46,6 +57,7 @@ export default function DashboardPage() {
   const api = useApi();
   const [data, setData] = useState<DashboardData | null>(null);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -140,7 +152,7 @@ export default function DashboardPage() {
       {showSkeleton ? (
         <>
           <div className="stat-grid">
-            {[0, 1, 2, 3].map((key) => (
+            {[0, 1, 2, 3, 4, 5].map((key) => (
               <Skeleton key={key} className="skeleton--stat" />
             ))}
           </div>
@@ -179,6 +191,18 @@ export default function DashboardPage() {
               value={metrics.totals.categories}
               icon={Layers}
               tone="accent-2"
+            />
+            <StatCard
+              label="Vencidas"
+              value={metrics.tasksOverdue}
+              icon={AlertTriangle}
+              tone="danger"
+            />
+            <StatCard
+              label="Pendientes para hoy"
+              value={metrics.tasksDueToday}
+              icon={CalendarClock}
+              tone="accent"
             />
           </div>
 
@@ -271,6 +295,13 @@ export default function DashboardPage() {
           </section>
         </div>
       ) : null}
+
+      <section className="dashboard__calendar" aria-label="Calendario de tareas">
+        <div className="calendar-grid">
+          <DashboardCalendar onDaySelect={setSelectedDay} />
+          <DayTasksCard date={selectedDay} />
+        </div>
+      </section>
     </div>
   );
 }

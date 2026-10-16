@@ -53,3 +53,28 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   completed: "Completado",
   archived: "Archivado",
 };
+
+export const TASK_STATUSES = ["PENDING", "COMPLETED"] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  PENDING: "Pendiente",
+  COMPLETED: "Completada",
+};
+
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+  LOW: "Baja",
+  MEDIUM: "Media",
+  HIGH: "Alta",
+};
+
+export const TASK_PRIORITY_COLOR: Record<TaskPriority, string> = {
+  LOW: "var(--text-muted)",
+  MEDIUM: "var(--accent)",
+  HIGH: "var(--pending)",
+};
+
+export const TASK_OVERDUE_COLOR = "var(--danger)";
+export const TASK_COMPLETED_COLOR = "var(--ok)";

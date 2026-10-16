@@ -14,7 +14,7 @@ export default function StatCard({
   label: string;
   value: number;
   icon: LucideIcon;
-  tone?: "accent" | "accent-2";
+  tone?: "accent" | "accent-2" | "danger";
 }) {
   return (
     <article className={`stat-card stat-card--${tone}`}>

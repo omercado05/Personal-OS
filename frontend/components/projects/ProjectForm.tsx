@@ -62,7 +62,7 @@ export default function ProjectForm({ mode, initial }: ProjectFormProps) {
   return (
     <form className="form" onSubmit={onSubmit} noValidate>
       {error ? (
-        <div className="alert">
+        <div className="alert" role="alert">
           <span>{error}</span>
         </div>
       ) : null}

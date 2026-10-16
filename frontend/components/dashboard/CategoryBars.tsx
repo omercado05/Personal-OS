@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import {
   Bar,
   BarChart,
@@ -16,13 +17,16 @@ import { KNOWLEDGE_CATEGORY_LABELS, type KnowledgeCategory } from "@/lib/constan
 
 /** Entradas de conocimiento por categoría (barras horizontales). */
 export default function CategoryBars({ data }: { data: { category: string; count: number }[] }) {
+  const reduceMotion = useReducedMotion();
   const rows = data.map((item) => ({
     label: KNOWLEDGE_CATEGORY_LABELS[item.category as KnowledgeCategory] ?? item.category,
     count: item.count,
   }));
 
+  const summary = rows.map((row) => `${row.label}: ${row.count}`).join("; ");
+
   return (
-    <div className="chart chart--bars">
+    <div className="chart chart--bars" role="img" aria-label={`Entradas por categoría. ${summary}`}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={rows}
@@ -44,7 +48,13 @@ export default function CategoryBars({ data }: { data: { category: string; count
             labelStyle={TOOLTIP_LABEL_STYLE}
             cursor={{ fill: "rgba(255, 255, 255, 0.04)" }}
           />
-          <Bar dataKey="count" name="Entradas" radius={[0, 6, 6, 0]} maxBarSize={22}>
+          <Bar
+            dataKey="count"
+            name="Entradas"
+            radius={[0, 6, 6, 0]}
+            maxBarSize={22}
+            isAnimationActive={!reduceMotion}
+          >
             {rows.map((row, index) => (
               <Cell key={row.label} fill={CHART_PALETTE[index % CHART_PALETTE.length]} />
             ))}

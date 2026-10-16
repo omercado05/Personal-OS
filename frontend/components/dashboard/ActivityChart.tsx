@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import {
   Area,
   AreaChart,
@@ -40,10 +41,14 @@ export default function ActivityChart({
 }: {
   data: { month: string; knowledge: number; projects: number }[];
 }) {
+  const reduceMotion = useReducedMotion();
   const rows = data.map((row) => ({ ...row, label: shortMonth(row.month) }));
+  const summary = rows
+    .map((row) => `${row.label}: ${row.knowledge} entradas, ${row.projects} proyectos`)
+    .join("; ");
 
   return (
-    <div className="chart chart--activity">
+    <div className="chart chart--activity" role="img" aria-label={`Actividad mensual. ${summary}`}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
           <defs>
@@ -87,6 +92,7 @@ export default function ActivityChart({
             stroke="#22d3ee"
             strokeWidth={2}
             fill="url(#fillKnowledge)"
+            isAnimationActive={!reduceMotion}
           />
           <Area
             type="monotone"
@@ -95,6 +101,7 @@ export default function ActivityChart({
             stroke="#22c55e"
             strokeWidth={2}
             fill="url(#fillProjects)"
+            isAnimationActive={!reduceMotion}
           />
         </AreaChart>
       </ResponsiveContainer>

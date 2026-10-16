@@ -129,7 +129,7 @@ export default function DashboardPage() {
       </header>
 
       {error ? (
-        <div className="alert">
+        <div className="alert" role="alert">
           <span>{error}</span>
           <button type="button" className="ghost small" onClick={reload}>
             Reintentar

@@ -168,7 +168,7 @@ export default function ProjectsPage() {
       </form>
 
       {error ? (
-        <div className="alert">
+        <div className="alert" role="alert">
           <span>{error}</span>
           <button type="button" className="ghost small" onClick={refresh}>
             Reintentar
@@ -177,16 +177,21 @@ export default function ProjectsPage() {
       ) : null}
 
       {loading && !projects ? (
-        <ul className="data-list" aria-hidden="true">
-          {[0, 1, 2].map((key) => (
-            <li key={key} className="data-list__item">
-              <div className="data-list__main" style={{ flex: 1 }}>
-                <Skeleton className="skeleton--line" />
-                <Skeleton className="skeleton--line sm" />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="visually-hidden" role="status">
+            Cargando proyectos…
+          </p>
+          <ul className="data-list" aria-hidden="true">
+            {[0, 1, 2].map((key) => (
+              <li key={key} className="data-list__item">
+                <div className="data-list__main" style={{ flex: 1 }}>
+                  <Skeleton className="skeleton--line" />
+                  <Skeleton className="skeleton--line sm" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
 
       {!loading && !error && projects && projects.length === 0 ? (

@@ -71,7 +71,10 @@ export default function KnowledgeDetailPage() {
 
   if (loading) {
     return (
-      <div className="panel">
+      <div className="panel" aria-busy="true">
+        <p className="visually-hidden" role="status">
+          Cargando entrada…
+        </p>
         <Skeleton className="skeleton--line sm" />
         <Skeleton className="skeleton--line" />
         <Skeleton className="skeleton--chart" />
@@ -82,7 +85,7 @@ export default function KnowledgeDetailPage() {
   if (error || !entry) {
     return (
       <div className="panel">
-        <div className="alert">
+        <div className="alert" role="alert">
           <span>{error ?? "Entrada no encontrada."}</span>
           <Link className="link-button ghost small" href="/knowledge">
             Volver

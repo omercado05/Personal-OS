@@ -53,7 +53,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <GlobalSearch />
         </header>
-        <main className="app-main" id="main">
+        <main className="app-main" id="main" tabIndex={-1}>
           <PageTransition>{children}</PageTransition>
         </main>
       </div>

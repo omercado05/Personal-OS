@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { STATUS_COLORS, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "@/lib/chart-colors";
@@ -7,6 +8,7 @@ import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/lib/constants";
 
 /** Distribución de proyectos por estado: donut con total al centro + leyenda. */
 export default function StatusDonut({ data }: { data: { status: string; count: number }[] }) {
+  const reduceMotion = useReducedMotion();
   const rows = data.map((item) => {
     const status = item.status as ProjectStatus;
     return {
@@ -19,7 +21,7 @@ export default function StatusDonut({ data }: { data: { status: string; count: n
 
   return (
     <div className="donut">
-      <div className="chart chart--donut">
+      <div className="chart chart--donut" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -30,6 +32,7 @@ export default function StatusDonut({ data }: { data: { status: string; count: n
               outerRadius="90%"
               paddingAngle={3}
               stroke="none"
+              isAnimationActive={!reduceMotion}
             >
               {rows.map((row) => (
                 <Cell key={row.name} fill={row.color} />

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -15,7 +17,8 @@ interface ConfirmDialogProps {
 
 /**
  * Diálogo de confirmación para acciones destructivas (borrado). Se cierra con
- * `Escape` o clic en el fondo; el foco inicial va al botón de cancelar.
+ * `Escape` o clic en el fondo; atrapa el foco mientras está abierto y lo
+ * devuelve al elemento anterior al cerrarse.
  */
 export default function ConfirmDialog({
   open,
@@ -27,26 +30,9 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const onCancelRef = useRef(onCancel);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    onCancelRef.current = onCancel;
-  }, [onCancel]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onCancelRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    cancelRef.current?.focus();
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  useFocusTrap(open, modalRef, onCancel);
 
   if (!open) {
     return null;
@@ -61,21 +47,24 @@ export default function ConfirmDialog({
         }
       }}
     >
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div
+        ref={modalRef}
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-title"
+        aria-describedby="confirm-message"
+      >
         <h2 id="confirm-title">{title}</h2>
-        <div className="modal__body">{message}</div>
+        <div className="modal__body" id="confirm-message">
+          {message}
+        </div>
         <div className="modal__actions">
-          <button
-            ref={cancelRef}
-            type="button"
-            className="ghost"
-            onClick={onCancel}
-            disabled={busy}
-          >
+          <button type="button" className="ghost" onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </button>
           <button type="button" className="danger" onClick={onConfirm} disabled={busy}>
-            {busy ? "Eliminando…" : confirmLabel}
+            {confirmLabel}
           </button>
         </div>
       </div>

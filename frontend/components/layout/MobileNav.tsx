@@ -5,7 +5,9 @@ import { LogOut, UserRound, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
+
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 import { initials, NAV_ITEMS } from "./nav";
 
@@ -13,6 +15,9 @@ import { initials, NAV_ITEMS } from "./nav";
  * Barra de navegación inferior para móvil/tablet, más una hoja de «Cuenta»
  * (avatar + cerrar sesión) que sustituye al pie de la barra lateral de
  * escritorio. Solo se muestra por debajo de 900px (ver `globals.css`).
+ *
+ * La hoja se comporta como diálogo modal: `Escape` la cierra, atrapa el foco
+ * mientras está abierta y lo devuelve al botón «Cuenta» al cerrarse.
  */
 export default function MobileNav() {
   const pathname = usePathname();
@@ -20,6 +25,11 @@ export default function MobileNav() {
   const user = useUser();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  const closeSheet = useCallback(() => setOpen(false), []);
+
+  useFocusTrap(open, sheetRef, closeSheet);
 
   const name = user?.displayName ?? user?.primaryEmail ?? "Usuario";
 
@@ -35,7 +45,7 @@ export default function MobileNav() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setOpen(false)}
+            onClick={closeSheet}
           />
         ) : null}
       </AnimatePresence>
@@ -43,8 +53,11 @@ export default function MobileNav() {
       <AnimatePresence>
         {open ? (
           <motion.div
+            ref={sheetRef}
+            id="account-sheet"
             className="mobile-sheet"
             role="dialog"
+            aria-modal="true"
             aria-label="Cuenta"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,7 +87,7 @@ export default function MobileNav() {
               href={href}
               className={active ? "active" : undefined}
               aria-current={active ? "page" : undefined}
-              onClick={() => setOpen(false)}
+              onClick={closeSheet}
             >
               <Icon size={20} strokeWidth={2} aria-hidden="true" />
               <span>{label}</span>
@@ -85,6 +98,8 @@ export default function MobileNav() {
           type="button"
           className={open ? "active" : undefined}
           aria-expanded={open}
+          aria-controls="account-sheet"
+          aria-haspopup="dialog"
           onClick={() => setOpen((value) => !value)}
         >
           {open ? <X size={20} aria-hidden="true" /> : <UserRound size={20} aria-hidden="true" />}

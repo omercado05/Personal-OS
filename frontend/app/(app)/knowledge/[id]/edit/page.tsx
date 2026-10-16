@@ -59,9 +59,13 @@ export default function EditKnowledgePage() {
         </Link>
       </header>
 
-      {loading ? <p className="muted">Cargando…</p> : null}
+      {loading ? (
+        <p className="muted" role="status">
+          Cargando…
+        </p>
+      ) : null}
       {error ? (
-        <div className="alert">
+        <div className="alert" role="alert">
           <span>{error}</span>
         </div>
       ) : null}

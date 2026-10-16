@@ -1,7 +1,9 @@
 export default function Loading() {
   return (
-    <main className="page">
-      <p className="loading">Cargando…</p>
+    <main className="page" aria-busy="true">
+      <p className="loading" role="status">
+        Cargando…
+      </p>
     </main>
   );
 }

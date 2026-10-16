@@ -83,6 +83,16 @@ export default function GlobalSearch() {
 
   const showResults = open && isActive;
 
+  const status = !showResults
+    ? ""
+    : loading
+      ? "Buscando…"
+      : error
+        ? `Error: ${error}`
+        : items.length === 0
+          ? "Sin resultados."
+          : `${items.length} resultados.`;
+
   return (
     <div className="search" ref={containerRef}>
       <div className="search__field">
@@ -95,8 +105,17 @@ export default function GlobalSearch() {
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           onFocus={() => setOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setOpen(false);
+            }
+          }}
         />
       </div>
+
+      <p className="visually-hidden" role="status">
+        {status}
+      </p>
 
       {showResults ? (
         <div className="search__results">

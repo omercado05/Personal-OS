@@ -13,9 +13,16 @@ import { HexclaveClientApp } from "@hexclave/next";
  *   (login/registro/verificación) se renderizan dentro de esta propia app en la
  *   ruta `/handler/[...stack]` (ver `app/handler/`), en lugar de depender de las
  *   páginas "hosted" de Hexclave (que apuntan al servicio en la nube).
+ * - `analytics: { enabled: false }` desactiva la analítica y el *session replay*
+ *   del SDK. Además de ser innecesarios (y poco deseables) en una app personal,
+ *   su `SessionRecorder` llama a `crypto.randomUUID()` sin comprobar el contexto:
+ *   esa API **solo existe en contextos seguros** (HTTPS o `localhost`) y, al
+ *   acceder por HTTP a la IP de Tailscale, lanzaba un `TypeError` durante el
+ *   arranque del provider que rompía la hidratación de la app.
  */
 export const hexclaveClientApp = new HexclaveClientApp({
   tokenStore: "nextjs-cookie",
+  analytics: { enabled: false },
   urls: {
     default: { type: "handler-component" },
     home: "/",

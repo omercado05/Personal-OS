@@ -1,4 +1,27 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const CONFIGURED_API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+/**
+ * URL base de la API del backend.
+ *
+ * En el navegador usamos el **mismo host** que sirve la página (solo cambia el
+ * puerto, tomado de `NEXT_PUBLIC_API_URL`). Así las llamadas siempre son
+ * *first-party* (`http://mi-host:4000`) en lugar de cruzadas a otra IP: algunos
+ * navegadores/extensiones con protección anti-tracking (p. ej. Zen/uBlock)
+ * bloquean las peticiones cross-site y las reportan como `NetworkError`.
+ *
+ * `apiFetch` solo se usa desde el navegador (hook `useApi`), así que `window`
+ * siempre está disponible; el fallback cubre el render en servidor.
+ */
+function resolveApiBaseUrl(): string {
+  if (typeof window === "undefined") return CONFIGURED_API_URL;
+  try {
+    const configured = new URL(CONFIGURED_API_URL);
+    return `${configured.protocol}//${window.location.hostname}:${configured.port}`;
+  } catch {
+    return CONFIGURED_API_URL;
+  }
+}
 
 /**
  * Firma de la función que expone el hook `useApi`: llama a la API e inyecta el
@@ -43,7 +66,7 @@ export async function apiFetch<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${resolveApiBaseUrl()}${path}`, {
     ...init,
     headers,
     cache: "no-store",

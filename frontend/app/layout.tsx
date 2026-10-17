@@ -1,8 +1,9 @@
 import { HexclaveProvider, HexclaveTheme } from "@hexclave/next";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
-import { hexclaveClientApp } from "@/hexclave/client";
+import { createHexclaveClientApp } from "@/hexclave/client";
 import { fontVariables } from "@/lib/fonts";
 
 import "./globals.css";
@@ -40,7 +41,14 @@ const HEXCLAVE_THEME = {
   dark: AUTH_COLORS,
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // La URL de la API de Hexclave que usa el navegador se decide aquí: usamos el
+  // `host` de la petición para que el navegador llame a Hexclave en su mismo
+  // host (solo cambia el puerto) y no como recurso de terceros. Ver
+  // `hexclave/client.ts`.
+  const host = (await headers()).get("host");
+  const hexclaveClientApp = createHexclaveClientApp(host);
+
   return (
     <html lang="es" className={fontVariables} suppressHydrationWarning>
       <body>

@@ -1,5 +1,6 @@
 import type { ApiFn } from "./api";
 import type { TaskPriority, TaskStatus } from "./constants";
+import { clientTimeZone } from "./format";
 import { buildQuery } from "./knowledge";
 import type { ItemResponse, ListMeta, ListResponse, Task, TaskDayCount } from "./types";
 
@@ -14,6 +15,8 @@ export interface TaskListParams {
   overdue?: boolean;
   dueToday?: boolean;
   groupByDay?: boolean;
+  /** Zona horaria IANA a usar; por defecto, la del navegador. */
+  tz?: string;
   page?: number;
   pageSize?: number;
 }
@@ -40,6 +43,9 @@ export interface TaskDaysResponse {
  * Los booleanos solo se envían cuando son `true`: el backend usa
  * `z.coerce.boolean()`, que interpretaría cualquier cadena no vacía
  * (incluida `"false"`) como `true`.
+ *
+ * La zona horaria del navegador se añade siempre (salvo que se pase `tz`):
+ * el backend agrupa por día y calcula «hoy» en esa zona.
  */
 function toQuery(params: TaskListParams): Record<string, string | number | undefined> {
   return {
@@ -52,6 +58,7 @@ function toQuery(params: TaskListParams): Record<string, string | number | undef
     overdue: params.overdue ? "true" : undefined,
     dueToday: params.dueToday ? "true" : undefined,
     groupByDay: params.groupByDay ? "true" : undefined,
+    tz: params.tz ?? clientTimeZone(),
     page: params.page,
     pageSize: params.pageSize,
   };

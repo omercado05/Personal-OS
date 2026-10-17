@@ -138,6 +138,27 @@ describe("rutas de tareas (protegidas)", () => {
     expect(response.json().data).toEqual([{ date: "2026-10-16", count: 1 }]);
   });
 
+  it("GET /tasks?groupByDay=true reenvía la zona horaria al servicio", async () => {
+    let received: string | undefined;
+    app = buildAppWith(
+      createFakeService({
+        async groupByDay(_userId, query) {
+          received = query.tz;
+          return [{ date: "2026-10-17", count: 1 }];
+        },
+      }),
+    );
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/tasks?groupByDay=true&tz=America/Bogota",
+      headers: authHeader,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(received).toBe("America/Bogota");
+    expect(response.json().data).toEqual([{ date: "2026-10-17", count: 1 }]);
+  });
+
   it("POST /tasks crea con 201 y aplica valores por defecto", async () => {
     app = buildAppWith(createFakeService());
     const response = await app.inject({

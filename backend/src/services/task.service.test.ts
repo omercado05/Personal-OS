@@ -201,4 +201,27 @@ describe("TaskService", () => {
       { date: "2026-10-18", count: 1 },
     ]);
   });
+
+  it("reenvía la zona horaria del cliente al repositorio", async () => {
+    let listParams: Parameters<TaskRepository["list"]>[0] | undefined;
+    let dayParams: Parameters<TaskRepository["groupByDay"]>[0] | undefined;
+    const service = createTaskService(
+      fakeRepository({
+        async list(input) {
+          listParams = input;
+          return { items: [task()], total: 1 };
+        },
+        async groupByDay(input) {
+          dayParams = input;
+          return [{ date: "2026-10-17", count: 1 }];
+        },
+      }),
+    );
+
+    await service.list(1n, { tz: "America/Bogota", page: 1, pageSize: 20 });
+    await service.groupByDay(1n, { tz: "America/Bogota" });
+
+    expect(listParams?.timeZone).toBe("America/Bogota");
+    expect(dayParams?.timeZone).toBe("America/Bogota");
+  });
 });

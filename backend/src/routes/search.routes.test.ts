@@ -68,6 +68,8 @@ function createFakeService(overrides: Partial<SearchService> = {}): SearchServic
         knowledgeByCategory: [],
         projectsByStatus: [],
         activity: [],
+        tasksDueToday: 0,
+        tasksOverdue: 0,
       };
       return result;
     },
@@ -155,6 +157,8 @@ describe("rutas de search y dashboard (protegidas)", () => {
             knowledgeByCategory: [{ category: "Programming", count: 3 }],
             projectsByStatus: [{ status: "idea", count: 2 }],
             activity: [{ month: "2026-10", knowledge: 3, projects: 2 }],
+            tasksDueToday: 4,
+            tasksOverdue: 1,
           };
         },
       }),
@@ -171,7 +175,35 @@ describe("rutas de search y dashboard (protegidas)", () => {
         knowledgeByCategory: [{ category: "Programming", count: 3 }],
         projectsByStatus: [{ status: "idea", count: 2 }],
         activity: [{ month: "2026-10", knowledge: 3, projects: 2 }],
+        tasksDueToday: 4,
+        tasksOverdue: 1,
       },
     });
+  });
+
+  it("GET /dashboard/metrics reenvía la zona horaria al servicio", async () => {
+    let received: string | undefined;
+    app = buildAppWith(
+      createFakeService({
+        async metrics(_userId, _months, timeZone) {
+          received = timeZone;
+          return {
+            totals: { knowledge: 0, projects: 0, tags: 0, categories: 0 },
+            knowledgeByCategory: [],
+            projectsByStatus: [],
+            activity: [],
+            tasksDueToday: 0,
+            tasksOverdue: 0,
+          };
+        },
+      }),
+    );
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/dashboard/metrics?tz=America/Bogota",
+      headers: authHeader,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(received).toBe("America/Bogota");
   });
 });

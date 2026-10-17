@@ -3,7 +3,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { unauthorized } from "../lib/errors.js";
 import { success } from "../lib/http.js";
 import { validateOrThrow } from "../middleware/validate.js";
-import { searchQuerySchema } from "../schemas/search.schema.js";
+import { metricsQuerySchema, searchQuerySchema } from "../schemas/search.schema.js";
 import type { SearchService } from "../services/search.service.js";
 
 function requireUserId(request: FastifyRequest): bigint {
@@ -45,7 +45,8 @@ export function createSearchController(service: SearchService): SearchController
 
     async metrics(request, reply) {
       const userId = requireUserId(request);
-      const result = await service.metrics(userId);
+      const query = validateOrThrow(metricsQuerySchema, request.query);
+      const result = await service.metrics(userId, undefined, query.tz);
       return reply.send(success(result));
     },
 

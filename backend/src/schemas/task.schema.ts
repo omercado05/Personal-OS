@@ -51,6 +51,10 @@ export const listTasksQuerySchema = z.object({
   overdue: z.preprocess(emptyToUndefined, z.coerce.boolean().optional()),
   dueToday: z.preprocess(emptyToUndefined, z.coerce.boolean().optional()),
   groupByDay: z.preprocess(emptyToUndefined, z.coerce.boolean().optional()),
+  // Zona horaria IANA del cliente (`Intl.DateTimeFormat().resolvedOptions().timeZone`).
+  // Decide a qué día pertenece `dueAt` al agrupar y qué es «hoy». Si falta o es
+  // inválida, se usa la zona local del servidor.
+  tz: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });

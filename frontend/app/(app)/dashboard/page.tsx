@@ -22,6 +22,7 @@ import StatusDonut from "@/components/dashboard/StatusDonut";
 import DashboardCalendar from "@/components/tasks/DashboardCalendar";
 import DayTasksCard from "@/components/tasks/DayTasksCard";
 import { KNOWLEDGE_CATEGORY_LABELS, PROJECT_STATUS_LABELS } from "@/lib/constants";
+import { clientTimeZone } from "@/lib/format";
 import type { DashboardMetrics } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
@@ -72,9 +73,13 @@ export default function DashboardPage() {
 
     void (async () => {
       try {
+        const timeZone = clientTimeZone();
+        const metricsUrl = timeZone
+          ? `/api/v1/dashboard/metrics?tz=${encodeURIComponent(timeZone)}`
+          : "/api/v1/dashboard/metrics";
         const [dashboard, dashboardMetrics] = await Promise.all([
           api<{ data: DashboardData }>("/api/v1/dashboard", { signal: controller.signal }),
-          api<{ data: DashboardMetrics }>("/api/v1/dashboard/metrics", {
+          api<{ data: DashboardMetrics }>(metricsUrl, {
             signal: controller.signal,
           }),
         ]);

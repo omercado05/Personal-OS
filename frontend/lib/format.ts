@@ -22,3 +22,17 @@ export function parseCommaList(value: string): string[] {
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 }
+
+/**
+ * Zona horaria IANA del navegador (p. ej. `America/Bogota`).
+ *
+ * El backend la usa para decidir a qué día pertenece `dueAt` y qué es «hoy»,
+ * de modo que los días coincidan con los del calendario del usuario.
+ */
+export function clientTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}

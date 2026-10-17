@@ -75,6 +75,7 @@ export function createTaskService(
         to: query.to,
         overdue: query.overdue,
         dueToday: query.dueToday,
+        timeZone: query.tz,
         page: query.page,
         pageSize: query.pageSize,
       });
@@ -97,6 +98,7 @@ export function createTaskService(
         to: query.to,
         overdue: query.overdue,
         dueToday: query.dueToday,
+        timeZone: query.tz,
       });
     },
 

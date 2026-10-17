@@ -1,5 +1,6 @@
 import type { KnowledgeEntry, Project, Tag } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { endOfDayInTimeZone, resolveTimeZone, startOfDayInTimeZone } from "../lib/timezone.js";
 
 export interface SearchParams {
   userId: bigint;
@@ -32,6 +33,20 @@ export interface SearchResult {
 /** Clave de mes `YYYY-MM` (en hora local del servidor) para agrupar actividad. */
 function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Inicio del día local del servidor. */
+function startOfLocalDay(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+/** Fin del día local del servidor. */
+function endOfLocalDay(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
 }
 
 function snippet(text: string | null | undefined, q: string, length = 160): string {
@@ -72,7 +87,7 @@ export interface SearchRepository {
     recentKnowledge: (KnowledgeEntry & { tags: { tag: Tag }[] })[];
     recentProjects: (Project & { technologies: { projectId: bigint; name: string }[] })[];
   }>;
-  metrics(userId: bigint, months: number): Promise<DashboardMetrics>;
+  metrics(userId: bigint, months: number, timeZone?: string): Promise<DashboardMetrics>;
 }
 
 export function createSearchRepository(): SearchRepository {
@@ -211,7 +226,7 @@ export function createSearchRepository(): SearchRepository {
       return { recentKnowledge, recentProjects };
     },
 
-    async metrics(userId, months) {
+    async metrics(userId, months, timeZoneParam) {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
 
@@ -267,15 +282,14 @@ export function createSearchRepository(): SearchRepository {
         }
       }
 
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
+      const timeZone = resolveTimeZone(timeZoneParam);
+      const todayStart = timeZone ? startOfDayInTimeZone(now, timeZone) : startOfLocalDay(now);
+      const todayEnd = timeZone ? endOfDayInTimeZone(now, timeZone) : endOfLocalDay(now);
       const [tasksDueToday, tasksOverdue] = await Promise.all([
         prisma.task.count({
           where: { userId, status: "PENDING", dueAt: { gte: todayStart, lte: todayEnd } },
         }),
-        prisma.task.count({ where: { userId, status: "PENDING", dueAt: { lt: new Date() } } }),
+        prisma.task.count({ where: { userId, status: "PENDING", dueAt: { lt: now } } }),
       ]);
       return {
         totals: {

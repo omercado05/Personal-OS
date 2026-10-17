@@ -16,3 +16,11 @@ export const searchQuerySchema = z.object({
 });
 
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
+
+/** Query de `GET /api/v1/dashboard/metrics`. */
+export const metricsQuerySchema = z.object({
+  // Zona horaria IANA del cliente para calcular «hoy» (tareas que vencen hoy).
+  tz: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
+});
+
+export type MetricsQuery = z.infer<typeof metricsQuerySchema>;

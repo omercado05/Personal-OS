@@ -6,6 +6,12 @@ import type {
   TaskStatus,
 } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import {
+  endOfDayInTimeZone,
+  formatDateInTimeZone,
+  resolveTimeZone,
+  startOfDayInTimeZone,
+} from "../lib/timezone.js";
 
 /** Tarea con su proyecto (opcional) resuelto. */
 export type TaskWithProject = Task & { project: Project | null };
@@ -20,6 +26,8 @@ export interface ListTasksParams {
   to?: Date;
   overdue?: boolean;
   dueToday?: boolean;
+  /** Zona horaria IANA del cliente para calcular «hoy» y agrupar por día. */
+  timeZone?: string;
   page: number;
   pageSize: number;
 }
@@ -74,19 +82,38 @@ function endOfToday(): Date {
   return date;
 }
 
+/** Clave de día `YYYY-MM-DD` en la zona local del servidor. */
+function serverLocalDayKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+/** Clave de día `YYYY-MM-DD` en la zona del cliente, con respaldo en la del servidor. */
+function dayKey(date: Date, timeZone: string | undefined): string {
+  return timeZone ? formatDateInTimeZone(date, timeZone) : serverLocalDayKey(date);
+}
+
 /**
  * Construye el filtro de `dueAt` a partir de los parámetros.
  *
  * `overdue` y `dueToday` tienen prioridad sobre `from`/`to` porque ambos
- * acotan el rango a «ahora» o a «hoy» respectivamente.
+ * acotan el rango a «ahora» o a «hoy» respectivamente. `overdue` compara con
+ * el instante actual (es independiente de la zona horaria); `dueToday` usa la
+ * zona del cliente para que «hoy» signifique el día local del usuario.
  */
 function buildDueAtFilter(
-  params: Pick<ListTasksParams, "overdue" | "dueToday" | "from" | "to">,
+  params: Pick<ListTasksParams, "overdue" | "dueToday" | "from" | "to" | "timeZone">,
 ): Prisma.DateTimeNullableFilter | undefined {
   if (params.overdue) {
     return { lt: new Date() };
   }
   if (params.dueToday) {
+    const timeZone = resolveTimeZone(params.timeZone);
+    if (timeZone) {
+      const now = new Date();
+      return { gte: startOfDayInTimeZone(now, timeZone), lte: endOfDayInTimeZone(now, timeZone) };
+    }
     return { gte: startOfToday(), lte: endOfToday() };
   }
   if (params.from || params.to) {
@@ -135,6 +162,7 @@ export function createTaskRepository(): TaskRepository {
 
     async groupByDay(params) {
       const dueAt = buildDueAtFilter(params);
+      const timeZone = resolveTimeZone(params.timeZone);
       const where: Prisma.TaskWhereInput = {
         userId: params.userId,
         status: "PENDING",
@@ -155,9 +183,7 @@ export function createTaskRepository(): TaskRepository {
       const counts = new Map<string, number>();
       for (const { dueAt: value } of rows) {
         if (!value) continue;
-        const key = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(
-          value.getDate(),
-        ).padStart(2, "0")}`;
+        const key = dayKey(value, timeZone);
         counts.set(key, (counts.get(key) ?? 0) + 1);
       }
 

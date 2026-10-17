@@ -59,7 +59,7 @@ export type DashboardMetricsDto = DashboardMetrics;
 export interface SearchService {
   search(userId: bigint, query: SearchQuery): Promise<SearchResultDto>;
   dashboard(userId: bigint, limit?: number): Promise<DashboardDto>;
-  metrics(userId: bigint, months?: number): Promise<DashboardMetricsDto>;
+  metrics(userId: bigint, months?: number, timeZone?: string): Promise<DashboardMetricsDto>;
 }
 
 export function createSearchService(
@@ -134,8 +134,8 @@ export function createSearchService(
       };
     },
 
-    async metrics(userId, months = 6) {
-      return repository.metrics(userId, months);
+    async metrics(userId, months = 6, timeZone) {
+      return repository.metrics(userId, months, timeZone);
     },
   };
 }

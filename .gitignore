@@ -43,3 +43,6 @@ backups/
 # Skills de agentes instaladas localmente (UI UX Pro Max y otras).
 # Se reinstalan con `npx ui-ux-pro-max-cli init --ai opencode`.
 .opencode/skills/
+
+# Claude Code: ajustes personales (no versionar)
+.claude/settings.local.json

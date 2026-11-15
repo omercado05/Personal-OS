@@ -48,6 +48,15 @@ export function formatDateInTimeZone(date: Date, timeZone: string): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+/** Año, mes (1-12) y día del instante en la zona horaria dada. */
+export function datePartsInTimeZone(
+  date: Date,
+  timeZone: string,
+): { year: number; month: number; day: number } {
+  const [year, month, day] = formatDateInTimeZone(date, timeZone).split("-").map(Number);
+  return { year: year ?? NaN, month: month ?? NaN, day: day ?? NaN };
+}
+
 /** Desplazamiento (ms) de `timeZone` respecto a UTC en el instante dado. */
 function timeZoneOffsetMs(date: Date, timeZone: string): number {
   const parts = partsToRecord(
@@ -73,17 +82,18 @@ function timeZoneOffsetMs(date: Date, timeZone: string): number {
   return asUtc - date.getTime();
 }
 
-/** Medianoche local (como instante UTC) del día al que pertenece `date` en `timeZone`. */
-export function startOfDayInTimeZone(date: Date, timeZone: string): Date {
-  const parts = partsToRecord(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(date),
-  );
-  const wallClockAsUtc = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+/**
+ * Medianoche local (como instante UTC) de la fecha de calendario dada en `timeZone`.
+ * `monthIndex` empieza en 0 y, como en `Date.UTC`, los valores fuera de rango se
+ * normalizan (p. ej. `monthIndex = -1` es diciembre del año anterior).
+ */
+export function zonedMidnight(
+  year: number,
+  monthIndex: number,
+  day: number,
+  timeZone: string,
+): Date {
+  const wallClockAsUtc = Date.UTC(year, monthIndex, day);
   // El desplazamiento puede cambiar cerca de una transición de horario de verano,
   // así que se recalcula una vez sobre el instante corregido.
   const firstOffset = timeZoneOffsetMs(new Date(wallClockAsUtc), timeZone);
@@ -93,6 +103,12 @@ export function startOfDayInTimeZone(date: Date, timeZone: string): Date {
     result = wallClockAsUtc - secondOffset;
   }
   return new Date(result);
+}
+
+/** Medianoche local (como instante UTC) del día al que pertenece `date` en `timeZone`. */
+export function startOfDayInTimeZone(date: Date, timeZone: string): Date {
+  const { year, month, day } = datePartsInTimeZone(date, timeZone);
+  return zonedMidnight(year, month - 1, day, timeZone);
 }
 
 /** Último milisegundo del día local al que pertenece `date` en `timeZone`. */

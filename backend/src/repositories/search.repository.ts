@@ -1,6 +1,13 @@
 import type { KnowledgeEntry, Project, Tag } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
-import { endOfDayInTimeZone, resolveTimeZone, startOfDayInTimeZone } from "../lib/timezone.js";
+import {
+  datePartsInTimeZone,
+  endOfDayInTimeZone,
+  formatDateInTimeZone,
+  resolveTimeZone,
+  startOfDayInTimeZone,
+  zonedMidnight,
+} from "../lib/timezone.js";
 
 export interface SearchParams {
   userId: bigint;
@@ -207,7 +214,19 @@ export function createSearchRepository(): SearchRepository {
 
     async metrics(userId, months, timeZoneParam) {
       const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      const timeZone = resolveTimeZone(timeZoneParam);
+      // Los meses se cuentan en la zona del cliente; sin ella, en la del servidor.
+      const monthOf = (date: Date) =>
+        timeZone ? formatDateInTimeZone(date, timeZone).slice(0, 7) : monthKey(date);
+      const { year, month } = timeZone
+        ? datePartsInTimeZone(now, timeZone)
+        : { year: now.getFullYear(), month: now.getMonth() + 1 };
+      // Índice (base 0, puede ser negativo) del primer mes de la ventana:
+      // (month - 1) - (months - 1).
+      const firstMonthIndex = month - months;
+      const start = timeZone
+        ? zonedMidnight(year, firstMonthIndex, 1, timeZone)
+        : new Date(year, firstMonthIndex, 1);
 
       const [
         knowledgeTotal,
@@ -245,23 +264,23 @@ export function createSearchRepository(): SearchRepository {
       // Un cubo por mes (incluido el actual), para que los meses vacíos aparezcan.
       const buckets = new Map<string, { knowledge: number; projects: number }>();
       for (let index = 0; index < months; index += 1) {
-        const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
-        buckets.set(monthKey(date), { knowledge: 0, projects: 0 });
+        // Date.UTC solo normaliza año/mes; la clave YYYY-MM no depende de ninguna zona.
+        const key = new Date(Date.UTC(year, firstMonthIndex + index, 1)).toISOString().slice(0, 7);
+        buckets.set(key, { knowledge: 0, projects: 0 });
       }
       for (const row of knowledgeDates) {
-        const bucket = buckets.get(monthKey(row.createdAt));
+        const bucket = buckets.get(monthOf(row.createdAt));
         if (bucket) {
           bucket.knowledge += 1;
         }
       }
       for (const row of projectDates) {
-        const bucket = buckets.get(monthKey(row.createdAt));
+        const bucket = buckets.get(monthOf(row.createdAt));
         if (bucket) {
           bucket.projects += 1;
         }
       }
 
-      const timeZone = resolveTimeZone(timeZoneParam);
       const todayStart = timeZone ? startOfDayInTimeZone(now, timeZone) : startOfLocalDay(now);
       const todayEnd = timeZone ? endOfDayInTimeZone(now, timeZone) : endOfLocalDay(now);
       const [tasksDueToday, tasksOverdue] = await Promise.all([

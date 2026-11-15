@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 interface FakeRow {
   id: bigint;
@@ -7,6 +7,7 @@ interface FakeRow {
 }
 
 interface FindManyArgs {
+  where?: { createdAt?: { gte?: Date } };
   skip?: number;
   take?: number;
 }
@@ -14,12 +15,13 @@ interface FindManyArgs {
 const knowledgeRows: FakeRow[] = [];
 const projectRows: FakeRow[] = [];
 
-/** Simula `findMany` ordenado por updatedAt desc, id desc, con skip/take. */
+/** Simula `findMany` ordenado por updatedAt desc, id desc, con skip/take y `createdAt.gte`. */
 function fakeFindMany(rows: FakeRow[]) {
-  return vi.fn(async ({ skip = 0, take }: FindManyArgs) => {
-    const sorted = [...rows].sort(
-      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || Number(b.id - a.id),
-    );
+  return vi.fn(async ({ where, skip = 0, take }: FindManyArgs) => {
+    const from = where?.createdAt?.gte;
+    const sorted = rows
+      .filter((row) => !from || row.createdAt >= from)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || Number(b.id - a.id));
     return sorted.slice(skip, take === undefined ? undefined : skip + take);
   });
 }
@@ -28,11 +30,15 @@ const prismaMock = {
   knowledgeEntry: {
     findMany: fakeFindMany(knowledgeRows),
     count: vi.fn(async () => knowledgeRows.length),
+    groupBy: vi.fn(async () => []),
   },
   project: {
     findMany: fakeFindMany(projectRows),
     count: vi.fn(async () => projectRows.length),
+    groupBy: vi.fn(async () => []),
   },
+  tag: { count: vi.fn(async () => 0) },
+  task: { count: vi.fn(async () => 0) },
 };
 
 vi.mock("../lib/prisma.js", () => ({ prisma: prismaMock }));
@@ -106,5 +112,53 @@ describe("searchRepository.search con type 'all'", () => {
 
     // Orden global (empate por id desc): K4(23) P10(22) K3(22) P11(21) K2(21) K1(20).
     expect(titles).toEqual(["K3", "P11"]);
+  });
+});
+
+describe("searchRepository.metrics: actividad mensual", () => {
+  const serverTimeZone = process.env.TZ;
+
+  beforeEach(() => {
+    // El servidor corre en UTC (como en Docker); el cliente está en Bogotá (UTC-5).
+    process.env.TZ = "UTC";
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00.000Z"));
+    knowledgeRows.length = 0;
+    projectRows.length = 0;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    process.env.TZ = serverTimeZone;
+  });
+
+  function createdAt(iso: string) {
+    const date = new Date(iso);
+    return { id: 1n, updatedAt: date, createdAt: date };
+  }
+
+  it("agrupa por mes en la zona horaria del cliente", async () => {
+    // 1 nov 03:00Z = 31 oct 22:00 en Bogotá → octubre.
+    knowledgeRows.push(createdAt("2026-11-01T03:00:00.000Z"));
+    // 1 oct 03:00Z = 30 sep 22:00 en Bogotá → fuera de la ventana de 2 meses.
+    projectRows.push(createdAt("2026-10-01T03:00:00.000Z"));
+
+    const { activity } = await createSearchRepository().metrics(1n, 2, "America/Bogota");
+
+    expect(activity).toEqual([
+      { month: "2026-10", knowledge: 1, projects: 0 },
+      { month: "2026-11", knowledge: 0, projects: 0 },
+    ]);
+  });
+
+  it("sin zona horaria válida mantiene la hora del servidor", async () => {
+    knowledgeRows.push(createdAt("2026-11-01T03:00:00.000Z"));
+
+    const { activity } = await createSearchRepository().metrics(1n, 2, "Nope/Nowhere");
+
+    expect(activity).toEqual([
+      { month: "2026-10", knowledge: 0, projects: 0 },
+      { month: "2026-11", knowledge: 1, projects: 0 },
+    ]);
   });
 });

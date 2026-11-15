@@ -3,9 +3,6 @@
 Guía práctica para operar la aplicación: arrancarla, hacer copias de seguridad y
 acceder a ella **desde fuera de casa sin coste**.
 
-> Las decisiones y el porqué de cada cosa están en `DEVELOPMENT_PLAN.md`. Este
-> documento es el «cómo».
-
 ---
 
 ## 1. Operación básica
@@ -218,7 +215,7 @@ Inicia sesión con tu usuario habitual.
 - [x] **Verificado en el *tailnet* real** (2026-10-14): nodo Tailscale
   **`personal-os`** (`100.114.203.25`, este WSL2). Con `PUBLIC_HOST=100.114.203.25`,
   el flujo completo (login → `GET /api/v1/dashboard` → dashboard) responde `200`
-  desde el origen de Tailscale, sin errores. Ver `PROGRESS.md` para el detalle.
+  desde el origen de Tailscale, sin errores.
 
 > Detalle conocido: en orígenes **no seguros** (`http://` sin `localhost`),
 > `crypto.randomUUID` no existe. Es el comportamiento del navegador y hasta ahora

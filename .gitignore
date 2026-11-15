@@ -44,5 +44,10 @@ backups/
 # Se reinstalan con `npx ui-ux-pro-max-cli init --ai opencode`.
 .opencode/skills/
 
-# Claude Code: ajustes personales (no versionar)
-.claude/settings.local.json
+# Documentación y configuración del proceso de desarrollo (solo en local, no se publican)
+DEVELOPMENT_PLAN.md
+PROGRESS.md
+Prompt maestro*.md
+docs/design-system/
+.mcp.json
+.claude/

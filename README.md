@@ -1,183 +1,166 @@
 # Personal OS
 
-Aplicación web personal y privada para organizar proyectos, conocimiento/apuntes, ideas,
-recursos y módulos personales. Desarrollada y mantenida por una sola persona, desplegada en
-un servidor personal con Docker y Dockploy.
+[![CI](https://github.com/omercado05/Personal-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/omercado05/Personal-OS/actions/workflows/ci.yml)
 
-> **Estado actual: Fases 0–9, 11 y 12 completadas.** Backend (Fastify + Prisma + MySQL) y
-> frontend (Next.js: dashboard con métricas y calendario, Knowledge, Projects, Tasks y búsqueda
-> global) operativos con autenticación Hexclave self-hosted, endurecidos (rate limiting +
-> headers), con backups diarios y **accesibles desde fuera de casa con Tailscale**. Interfaz
-> rediseñada con el design system **«Bento Neon»** (Fase 11) y módulo de **tareas y calendario**
-> (Fase 12). Único pendiente: **Fase 10 — Despliegue en Dockploy** (diferida; requiere servidor).
-> Consulta `DEVELOPMENT_PLAN.md` para el plan, `PROGRESS.md` para el estado, `docs/design-system/`
-> para el sistema de diseño y [`docs/runbook.md`](./docs/runbook.md) para la operación diaria.
+Aplicación web personal y privada para organizar en un solo sitio **conocimiento, proyectos y
+tareas**. Está pensada para una sola persona, se autoaloja con Docker y se puede usar desde
+fuera de casa a través de Tailscale, sin abrir puertos ni contratar dominio.
+
+## Funcionalidades
+
+- **Dashboard** — resumen de lo último que has creado o editado, métricas (entradas por
+  categoría, proyectos por estado, actividad de los últimos meses) y un calendario con las
+  tareas que vencen hoy y las vencidas.
+- **Knowledge** — apuntes y notas con categorías (Programming, Linux, Networking, Databases,
+  University, Coffee, Ideas, Projects, Other) y etiquetas libres. Filtros por categoría,
+  etiqueta y texto.
+- **Projects** — proyectos con estado (idea, planning, in progress, paused, completed,
+  archived), descripción, URL y tecnologías.
+- **Tasks** — tareas con fecha de vencimiento, prioridad (baja, media, alta) y vínculo
+  opcional a un proyecto. Se agrupan por día según tu zona horaria.
+- **Búsqueda global** — busca a la vez en conocimiento y proyectos (títulos, contenido,
+  etiquetas y tecnologías) desde la barra superior.
+- **Cuenta y seguridad** — inicio de sesión con Hexclave
+  autoalojado; cada usuario solo ve sus propios datos. La API aplica límite de peticiones y
+  cabeceras de seguridad.
+- **Interfaz** — tema oscuro «Bento Neon», adaptada a móvil, tablet y escritorio, y accesible
+  con teclado y lector de pantalla.
 
 ## Stack
 
-- **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
-- **Backend:** Node.js + TypeScript + Fastify 5 (API REST `/api/v1`)
-- **Base de datos:** MySQL 8.4
-- **ORM:** Prisma 7.10.0 (+ `@prisma/adapter-mariadb`)
-- **Autenticación:** Hexclave (antes Stack Auth) — **self-hosted** con `stackauth/server`
-- **Contenedores:** Docker + docker-compose
-- **Despliegue:** Dockploy
-- **Gestor de paquetes:** pnpm 12
-- **Node:** 24 LTS
+| Capa            | Tecnología                                                 |
+| --------------- | ---------------------------------------------------------- |
+| Frontend        | Next.js 16 (App Router), React 19, TypeScript              |
+| Backend         | Node.js 24, Fastify 5, TypeScript, validación con Zod      |
+| Base de datos   | MySQL 8.4 con Prisma 7 (`@prisma/adapter-mariadb`)         |
+| Autenticación   | Hexclave self-hosted (Postgres + ClickHouse), JWT con JWKS |
+| Infraestructura | Docker + Docker Compose, pnpm 12                           |
+| Calidad         | Vitest, ESLint, Prettier y CI en GitHub Actions            |
 
-## Estructura
+## Arquitectura
+
+```text
+Navegador ──► frontend (Next.js :3000) ──REST /api/v1──► backend (Fastify :4000) ──► MySQL
+     │                                                        │
+     └────────── login ──► Hexclave (:8102) ◄── verifica JWT ─┘
+                              └─► Postgres + ClickHouse
+```
+
+Frontend y backend son proyectos independientes (cada uno con su `package.json`) y solo se
+comunican por la API REST. El backend sigue capas `routes → controllers → services →
+repositories` y filtra todos los datos por el usuario autenticado.
 
 ```text
 /
-├─ frontend/             # App Next.js (package.json propio)
-├─ backend/              # API Fastify (package.json propio)
-│  ├─ prisma/            # schema.prisma + migraciones
-│  └─ src/
-│     ├─ auth/           # verificación de JWT de Hexclave (JWKS)
-│     ├─ config/         # lectura de variables de entorno
-│     ├─ lib/            # utilidades (logger, errores, prisma, zona horaria, ...)
-│     ├─ middleware/     # auth, CORS, rate limiting, headers, validación
-│     ├─ routes/         # rutas de la API (/api/v1)
-│     ├─ controllers/    # adaptación HTTP ↔ servicios
-│     ├─ services/       # lógica de negocio
-│     ├─ repositories/   # acceso a datos (Prisma)
-│     ├─ schemas/        # esquemas Zod
-│     ├─ app.ts          # construcción de Fastify
-│     └─ server.ts       # arranque
-├─ docker-compose.yml    # entorno local (6 servicios)
-├─ docker/               # ficheros de apoyo (p. ej. entrypoint de Hexclave)
-├─ scripts/              # utilidades (p. ej. backup.sh)
-├─ docs/                 # runbook de operación y design system («Bento Neon»)
-├─ .env.example          # todas las variables, valores ficticios
-├─ DEVELOPMENT_PLAN.md   # plan detallado y ADRs
-├─ PROGRESS.md           # memoria persistente del proyecto
-└─ README.md
+├─ frontend/            # App Next.js
+├─ backend/             # API Fastify + Prisma (schema y migraciones en prisma/)
+├─ docker/              # Ficheros de apoyo de los contenedores
+├─ scripts/backup.sh    # Copias de seguridad de MySQL y Postgres
+├─ docs/runbook.md      # Guía de operación
+├─ docker-compose.yml   # Stack completo (6 servicios)
+└─ .env.example         # Todas las variables, con valores de ejemplo
 ```
-
-## Entorno de desarrollo
-
-El desarrollo se realiza en **WSL2 (Ubuntu) + Docker Desktop**, con el repositorio dentro del
-filesystem de Linux y Node LTS + pnpm instalados **dentro de WSL**. Ver ADR-008 en
-`DEVELOPMENT_PLAN.md` y `PROGRESS.md`.
-
-El stack local (`docker-compose.yml`) consta de **6 servicios**:
-
-```text
-frontend · backend · mysql · postgres · clickhouse · hexclave-server
-```
-
-`mysql` se publica solo en `127.0.0.1:3306` (para migraciones/copias desde el host);
-`postgres` y `clickhouse` **no se publican** (solo red interna de Docker).
 
 ## Puesta en marcha
 
-### 1. Requisitos
+### Requisitos
 
-- Docker Desktop (con integración WSL2) — o Docker Engine + plugin Compose.
-- Node **24 LTS** y **pnpm 12** (`npm install -g pnpm@12`).
-- Git.
+- Docker con Docker Compose (en Windows, Docker Desktop con WSL2).
+- Para desarrollar fuera de Docker: Node 24 y pnpm 12 (`npm install -g pnpm@12`).
 
-### 2. Variables de entorno
+### 1. Variables de entorno
 
 ```bash
 cp .env.example .env
 ```
 
-Edita `.env` y ajusta, como mínimo, las contraseñas y los secretos de Hexclave. Para generar
-secretos:
+Cambia en `.env` las contraseñas y los secretos de Hexclave. Para generarlos:
 
 ```bash
-# STACK_SERVER_SECRET
-openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
-# CRON_SECRET y claves internas
-openssl rand -hex 32
+openssl rand -base64 32 | tr '+/' '-_' | tr -d '='   # STACK_SERVER_SECRET
+openssl rand -hex 32                                  # CRON_SECRET y claves internas
 ```
 
-### Modo A — Desarrollo (rápido, hot-reload)
-
-Infraestructura en contenedores + aplicaciones con `pnpm dev` en WSL:
-
-```bash
-# 1) Levanta la infraestructura (base de datos y auth)
-docker compose up -d mysql postgres clickhouse hexclave-server
-
-# 2) Backend (terminal 1)
-cd backend && pnpm install && pnpm dev        # http://localhost:4000
-
-# 3) Frontend (terminal 2)
-cd frontend && pnpm install && pnpm dev       # http://localhost:3000
-```
-
-> El frontend fuera de Docker **no** lee el `.env` de la raíz. Para que la autenticación
-> funcione en este modo, crea `frontend/.env.local` con `NEXT_PUBLIC_API_URL` y las
-> variables públicas de Hexclave derivadas de las de la raíz:
-> `NEXT_PUBLIC_HEXCLAVE_API_URL`, `NEXT_PUBLIC_HEXCLAVE_PROJECT_ID` y
-> `NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY` (ver comentarios en `.env.example`).
-
-### Modo B — Integración (tipo producción)
-
-Levanta los 6 servicios construyendo las imágenes:
+### 2a. Todo en Docker
 
 ```bash
 docker compose up --build
 ```
 
-> La primera vez, `hexclave-server` ejecuta migraciones y el *seed* del usuario
-> administrador; puede tardar unos minutos en quedar *healthy*.
+La primera vez, Hexclave aplica sus migraciones y crea el usuario administrador; puede tardar
+unos minutos en estar listo.
 
-### Servicios locales
+### 2b. Desarrollo con recarga en caliente
 
-| Servicio            | URL                     | Notas                                   |
-| ------------------- | ----------------------- | --------------------------------------- |
-| Frontend            | http://localhost:3000   | Next.js                                 |
-| Backend | http://localhost:4000 | `GET /api/v1/health` · `GET /api/v1/health/ready` |
-| Hexclave dashboard  | http://localhost:8101   | Acceso con el usuario administrador      |
-| Hexclave API        | http://localhost:8102   | Usada por el frontend y el backend       |
-| MySQL | 127.0.0.1:3306 | Solo localhost (migraciones/copias) |
-| Postgres / ClickHouse | *(interno)* | No expuestos al host |
-
-## Comandos por proyecto
-
-En `backend/` y `frontend/` (proyectos independientes):
+La infraestructura en contenedores y las aplicaciones con `pnpm dev`:
 
 ```bash
-pnpm dev            # desarrollo con recarga
-pnpm build          # compilación de producción
-pnpm start          # ejecuta el build
-pnpm typecheck      # TypeScript estricto
-pnpm lint           # ESLint
-pnpm format         # Prettier (formateo)
-pnpm db:generate    # genera cliente Prisma (src/generated/)
-pnpm db:migrate      # migraciones en desarrollo (migrate dev)
-pnpm db:deploy       # aplica migraciones en producción (migrate deploy)
-pnpm db:studio       # interfaz gráfica de Prisma
-pnpm db:reset        # resetea BD y aplica migraciones (dev)
-pnpm prepare         # genera cliente Prisma (ejecutado tras pnpm install)
+docker compose up -d mysql postgres clickhouse hexclave-server
+cd backend && pnpm install && pnpm dev    # http://localhost:4000
+cd frontend && pnpm install && pnpm dev   # http://localhost:3000
 ```
 
-## Documentación
+Fuera de Docker, el frontend no lee el `.env` de la raíz: crea `frontend/.env.local` con
+`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_HEXCLAVE_API_URL`, `NEXT_PUBLIC_HEXCLAVE_PROJECT_ID` y
+`NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY` (los comentarios de `.env.example` explican de
+dónde sale cada una).
 
-- [`DEVELOPMENT_PLAN.md`](./DEVELOPMENT_PLAN.md) — visión, arquitectura, modelo de datos,
-  API, seguridad, fases y decisiones técnicas (ADRs).
-- [`PROGRESS.md`](./PROGRESS.md) — estado actual y próximos pasos (contexto persistente entre
-  sesiones).
-- [`docs/runbook.md`](./docs/runbook.md) — **operación**: arrancar/actualizar, copias de
-  seguridad y restauración, y acceso remoto con Tailscale.
-- [`docs/design-system/personal-os/MASTER.md`](./docs/design-system/personal-os/MASTER.md) —
-  design system «Bento Neon» (tokens, tipografía, movimiento, accesibilidad, responsive).
+### Servicios
 
-## Acceso remoto y copias de seguridad
+| Servicio              | Dirección             | Notas                                             |
+| --------------------- | --------------------- | ------------------------------------------------- |
+| Frontend              | http://localhost:3000 | La aplicación                                     |
+| Backend               | http://localhost:4000 | `GET /api/v1/health` · `GET /api/v1/health/ready` |
+| Hexclave (panel)      | http://localhost:8101 | Administración de usuarios                        |
+| Hexclave (API)        | http://localhost:8102 | Usada por frontend y backend                      |
+| MySQL                 | 127.0.0.1:3306        | Solo accesible desde el propio equipo             |
+| Postgres / ClickHouse | —                     | Solo en la red interna de Docker                  |
 
-- **Host público:** la app se configura con una sola variable, `PUBLIC_HOST` en `.env`
-  (`localhost` por defecto). Cambiarla a la dirección/nombre de Tailscale permite entrar
-  desde fuera de casa sin abrir puertos ni dominio. Ver §2 del runbook.
-- **Copias de seguridad:** `./scripts/backup.sh` genera volcados de MySQL (app) y Postgres
-  (Hexclave) en `backups/`, con retención y verificación. Ver §3 del runbook.
+## API
 
-## Convenciones de trabajo
+Todas las rutas cuelgan de `/api/v1`, devuelven JSON y, salvo `health`, exigen un token de
+Hexclave (`Authorization: Bearer …`).
 
-- Trabajar **por fases pequeñas**, cada una con un estado funcional verificable.
-- Al terminar cada fase: TypeScript, lint, tests y build en verde; actualizar docs y
-  `PROGRESS.md`.
-- Evitar sobreingeniería: sin microservicios, sin dependencias innecesarias.
-- Nunca incluir secretos reales en el repositorio.
+| Recurso   | Rutas                                                                     |
+| --------- | ------------------------------------------------------------------------- |
+| Salud     | `GET /health`, `GET /health/ready`                                        |
+| Usuario   | `GET /me`                                                                 |
+| Knowledge | `GET/POST /knowledge`, `GET/PUT/DELETE /knowledge/:id`, `GET /tags`       |
+| Projects  | `GET/POST /projects`, `GET/PUT/DELETE /projects/:id`                      |
+| Tasks     | `GET/POST /tasks`, `GET/PUT/DELETE /tasks/:id`, `PATCH /tasks/:id/toggle` |
+| Búsqueda  | `GET /search?q=&type=all\|knowledge\|projects&page=&pageSize=`            |
+| Dashboard | `GET /dashboard`, `GET /dashboard/metrics?tz=`                            |
+
+## Desarrollo
+
+Comandos disponibles en `backend/` y `frontend/`:
+
+```bash
+pnpm dev            # servidor de desarrollo
+pnpm build          # build de producción
+pnpm typecheck      # comprobación de tipos
+pnpm lint           # ESLint
+pnpm format:check   # Prettier
+pnpm test           # tests (solo backend, con Vitest)
+```
+
+Solo en `backend/`, para la base de datos:
+
+```bash
+pnpm db:migrate     # crea y aplica migraciones (desarrollo)
+pnpm db:deploy      # aplica migraciones pendientes
+pnpm db:studio      # explorador visual de Prisma
+```
+
+Cada push a `main` y cada pull request ejecutan en GitHub Actions el formato, el lint, los
+tipos, los tests y el build de ambos proyectos.
+
+## Operación
+
+[`docs/runbook.md`](./docs/runbook.md) explica cómo arrancar y actualizar la aplicación,
+configurar el acceso remoto con Tailscale (`PUBLIC_HOST`), y hacer y restaurar copias de
+seguridad con `scripts/backup.sh`.
+
+## Licencia
+
+[Apache License 2.0](./LICENSE).

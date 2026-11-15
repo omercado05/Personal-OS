@@ -31,8 +31,7 @@ import { HexclaveClientApp } from "@hexclave/next";
  * peticiones cross-site y el SDK las reporta como `NetworkError`, dejando el
  * login atascado.
  */
-const DEFAULT_BASE_URL =
-  process.env.NEXT_PUBLIC_HEXCLAVE_API_URL ?? "http://localhost:8102";
+const DEFAULT_BASE_URL = process.env.NEXT_PUBLIC_HEXCLAVE_API_URL ?? "http://localhost:8102";
 
 /**
  * Dada la cabecera `Host` de la petición (p. ej. `localhost:3000` o

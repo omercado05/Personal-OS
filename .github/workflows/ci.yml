@@ -1,0 +1,76 @@
+# CI de Personal OS: comprueba formato, lint, tipos, tests y build de cada app.
+# Backend y frontend son proyectos independientes (ADR-006), así que van en jobs separados.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: backend/package.json
+          cache: true
+          cache_dependency_path: backend/pnpm-lock.yaml
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # `prepare` ejecuta `prisma generate` (no necesita base de datos).
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # Vitest fija su propio entorno (sin `.env` ni base de datos).
+      - run: pnpm test
+      - run: pnpm build
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+          cache: true
+          cache_dependency_path: frontend/pnpm-lock.yaml
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # `next build` exige las variables públicas de Hexclave; en CI basta con
+      # valores de relleno porque solo se comprueba que la app compila.
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_HEXCLAVE_API_URL: http://localhost:8102
+          NEXT_PUBLIC_HEXCLAVE_PROJECT_ID: ci-placeholder
+          NEXT_PUBLIC_HEXCLAVE_PUBLISHABLE_CLIENT_KEY: ci-placeholder

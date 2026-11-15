@@ -4,12 +4,12 @@ Aplicación web personal y privada para organizar proyectos, conocimiento/apunte
 recursos y módulos personales. Desarrollada y mantenida por una sola persona, desplegada en
 un servidor personal con Docker y Dockploy.
 
-> **Estado actual: Fase 9 completada · Fase 11 en curso.** Backend (Fastify + Prisma + MySQL) y
-> frontend (Next.js: dashboard, Knowledge, Projects, búsqueda global) operativos con
-> autenticación Hexclave self-hosted, endurecidos (rate limiting + headers), con backups y
-> **accesibles desde fuera de casa con Tailscale**. En curso el **rediseño de interfaz «Bento
-> Neon»** (Fase 11; fundamentos ya aplicados: tokens, tipografía, movimiento y fondo ambiental).
-> Siguiente tras el rediseño: **Fase 10 — Despliegue en Dockploy** (diferida; requiere servidor).
+> **Estado actual: Fases 0–9, 11 y 12 completadas.** Backend (Fastify + Prisma + MySQL) y
+> frontend (Next.js: dashboard con métricas y calendario, Knowledge, Projects, Tasks y búsqueda
+> global) operativos con autenticación Hexclave self-hosted, endurecidos (rate limiting +
+> headers), con backups diarios y **accesibles desde fuera de casa con Tailscale**. Interfaz
+> rediseñada con el design system **«Bento Neon»** (Fase 11) y módulo de **tareas y calendario**
+> (Fase 12). Único pendiente: **Fase 10 — Despliegue en Dockploy** (diferida; requiere servidor).
 > Consulta `DEVELOPMENT_PLAN.md` para el plan, `PROGRESS.md` para el estado, `docs/design-system/`
 > para el sistema de diseño y [`docs/runbook.md`](./docs/runbook.md) para la operación diaria.
 
@@ -31,17 +31,23 @@ un servidor personal con Docker y Dockploy.
 /
 ├─ frontend/             # App Next.js (package.json propio)
 ├─ backend/              # API Fastify (package.json propio)
-│  ├─ prisma/            # (Fase 2) schema.prisma + migraciones
+│  ├─ prisma/            # schema.prisma + migraciones
 │  └─ src/
+│     ├─ auth/           # verificación de JWT de Hexclave (JWKS)
 │     ├─ config/         # lectura de variables de entorno
-│     ├─ lib/            # utilidades (logger, ...)
-│     ├─ routes/         # rutas de la API
+│     ├─ lib/            # utilidades (logger, errores, prisma, zona horaria, ...)
+│     ├─ middleware/     # auth, CORS, rate limiting, headers, validación
+│     ├─ routes/         # rutas de la API (/api/v1)
+│     ├─ controllers/    # adaptación HTTP ↔ servicios
+│     ├─ services/       # lógica de negocio
+│     ├─ repositories/   # acceso a datos (Prisma)
+│     ├─ schemas/        # esquemas Zod
 │     ├─ app.ts          # construcción de Fastify
 │     └─ server.ts       # arranque
 ├─ docker-compose.yml    # entorno local (6 servicios)
 ├─ docker/               # ficheros de apoyo (p. ej. entrypoint de Hexclave)
 ├─ scripts/              # utilidades (p. ej. backup.sh)
-├─ docs/                 # documentación de operación (runbook)
+├─ docs/                 # runbook de operación y design system («Bento Neon»)
 ├─ .env.example          # todas las variables, valores ficticios
 ├─ DEVELOPMENT_PLAN.md   # plan detallado y ADRs
 ├─ PROGRESS.md           # memoria persistente del proyecto
@@ -157,6 +163,8 @@ pnpm prepare         # genera cliente Prisma (ejecutado tras pnpm install)
   sesiones).
 - [`docs/runbook.md`](./docs/runbook.md) — **operación**: arrancar/actualizar, copias de
   seguridad y restauración, y acceso remoto con Tailscale.
+- [`docs/design-system/personal-os/MASTER.md`](./docs/design-system/personal-os/MASTER.md) —
+  design system «Bento Neon» (tokens, tipografía, movimiento, accesibilidad, responsive).
 
 ## Acceso remoto y copias de seguridad
 

@@ -1,0 +1,110 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+interface FakeRow {
+  id: bigint;
+  updatedAt: Date;
+  createdAt: Date;
+}
+
+interface FindManyArgs {
+  skip?: number;
+  take?: number;
+}
+
+const knowledgeRows: FakeRow[] = [];
+const projectRows: FakeRow[] = [];
+
+/** Simula `findMany` ordenado por updatedAt desc, id desc, con skip/take. */
+function fakeFindMany(rows: FakeRow[]) {
+  return vi.fn(async ({ skip = 0, take }: FindManyArgs) => {
+    const sorted = [...rows].sort(
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || Number(b.id - a.id),
+    );
+    return sorted.slice(skip, take === undefined ? undefined : skip + take);
+  });
+}
+
+const prismaMock = {
+  knowledgeEntry: {
+    findMany: fakeFindMany(knowledgeRows),
+    count: vi.fn(async () => knowledgeRows.length),
+  },
+  project: {
+    findMany: fakeFindMany(projectRows),
+    count: vi.fn(async () => projectRows.length),
+  },
+};
+
+vi.mock("../lib/prisma.js", () => ({ prisma: prismaMock }));
+
+const { createSearchRepository } = await import("./search.repository.js");
+
+function knowledge(id: number, day: number) {
+  const date = new Date(Date.UTC(2026, 0, day));
+  return {
+    id: BigInt(id),
+    title: `K${id}`,
+    content: "",
+    category: "NOTE",
+    tags: [],
+    updatedAt: date,
+    createdAt: date,
+  };
+}
+
+function project(id: number, day: number) {
+  const date = new Date(Date.UTC(2026, 0, day));
+  return {
+    id: BigInt(id),
+    name: `P${id}`,
+    description: "",
+    status: "ACTIVE",
+    url: null,
+    technologies: [],
+    updatedAt: date,
+    createdAt: date,
+  };
+}
+
+describe("searchRepository.search con type 'all'", () => {
+  beforeEach(() => {
+    knowledgeRows.length = 0;
+    projectRows.length = 0;
+    // Conocimiento más reciente (días 20-23) y proyectos más antiguos (días 10-13).
+    knowledgeRows.push(...[1, 2, 3, 4].map((id) => knowledge(id, 19 + id)));
+    projectRows.push(...[1, 2, 3, 4].map((id) => project(id, 9 + id)));
+  });
+
+  async function titlesOfPage(page: number, pageSize: number) {
+    const result = await createSearchRepository().search({
+      userId: 1n,
+      q: "",
+      type: "all",
+      page,
+      pageSize,
+    });
+    return { titles: result.items.map((item) => item.title), total: result.total };
+  }
+
+  it("pagina sobre la lista combinada sin perder ni repetir resultados", async () => {
+    const pages = await Promise.all([1, 2, 3, 4].map((page) => titlesOfPage(page, 3)));
+
+    expect(pages.map((p) => p.titles)).toEqual([
+      ["K4", "K3", "K2"],
+      ["K1", "P4", "P3"],
+      ["P2", "P1"],
+      [],
+    ]);
+    expect(pages.every((p) => p.total === 8)).toBe(true);
+  });
+
+  it("intercala por fecha de actualización entre ambos tipos", async () => {
+    projectRows.length = 0;
+    projectRows.push(project(10, 22), project(11, 21));
+
+    const { titles } = await titlesOfPage(2, 2);
+
+    // Orden global (empate por id desc): K4(23) P10(22) K3(22) P11(21) K2(21) K1(20).
+    expect(titles).toEqual(["K3", "P11"]);
+  });
+});

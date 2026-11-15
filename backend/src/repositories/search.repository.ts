@@ -67,6 +67,18 @@ function snippet(text: string | null | undefined, q: string, length = 160): stri
   return `${prefix}${slice.trim()}${suffix}`;
 }
 
+/** Orden por `updatedAt` desc y, en empate, por `id` desc (comparando bigint sin `Number`). */
+function compareByRecency(a: SearchResultItem, b: SearchResultItem): number {
+  const byDate = b.updatedAt.getTime() - a.updatedAt.getTime();
+  if (byDate !== 0) {
+    return byDate;
+  }
+  if (a.id === b.id) {
+    return 0;
+  }
+  return b.id > a.id ? 1 : -1;
+}
+
 export interface DashboardMetrics {
   totals: { knowledge: number; projects: number; tags: number; categories: number };
   knowledgeByCategory: { category: string; count: number }[];
@@ -96,115 +108,82 @@ export function createSearchRepository(): SearchRepository {
       const { userId, q, type, page, pageSize } = params;
       const offset = (page - 1) * pageSize;
       const query = q.trim();
+      const lowerQuery = query.toLowerCase();
+      const includeKnowledge = type === "all" || type === "knowledge";
+      const includeProjects = type === "all" || type === "projects";
+      // Con "all" el offset se aplica sobre la lista combinada: cada tabla aporta
+      // sus primeros `offset + pageSize` resultados, se mezclan y se corta la página.
+      const window =
+        type === "all" ? { skip: 0, take: offset + pageSize } : { skip: offset, take: pageSize };
+      const orderBy = [{ updatedAt: "desc" as const }, { id: "desc" as const }];
 
-      const items: SearchResultItem[] = [];
-      let total = 0;
+      const knowledgeWhere = {
+        userId,
+        OR: [
+          { title: { contains: query } },
+          { content: { contains: query } },
+          { tags: { some: { tag: { name: { contains: lowerQuery } } } } },
+        ],
+      };
+      const projectWhere = {
+        userId,
+        OR: [
+          { name: { contains: query } },
+          { description: { contains: query } },
+          { technologies: { some: { name: { contains: lowerQuery } } } },
+        ],
+      };
 
-      if (type === "all" || type === "knowledge") {
-        const where = {
-          userId,
-          OR: [
-            { title: { contains: query } },
-            { content: { contains: query } },
-            { tags: { some: { tag: { name: { contains: query.toLowerCase() } } } } },
-          ],
-        };
-        const [rows, count] = await Promise.all([
-          prisma.knowledgeEntry.findMany({
-            where,
-            include: { tags: { include: { tag: true } } },
-            orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-            skip: offset,
-            take: pageSize,
-          }),
-          prisma.knowledgeEntry.count({ where }),
-        ]);
-        total += count;
-        for (const row of rows) {
-          items.push({
-            kind: "knowledge",
-            id: row.id,
-            title: row.title,
-            snippet: snippet(row.content, query),
-            category: row.category,
-            tags: row.tags.map((t: { tag: Tag }) => t.tag.name),
-            updatedAt: row.updatedAt,
-            createdAt: row.createdAt,
-          });
-        }
-      }
+      const [knowledgeRows, knowledgeCount, projectRows, projectCount] = await Promise.all([
+        includeKnowledge
+          ? prisma.knowledgeEntry.findMany({
+              where: knowledgeWhere,
+              include: { tags: { include: { tag: true } } },
+              orderBy,
+              ...window,
+            })
+          : [],
+        includeKnowledge ? prisma.knowledgeEntry.count({ where: knowledgeWhere }) : 0,
+        includeProjects
+          ? prisma.project.findMany({
+              where: projectWhere,
+              include: { technologies: true },
+              orderBy,
+              ...window,
+            })
+          : [],
+        includeProjects ? prisma.project.count({ where: projectWhere }) : 0,
+      ]);
 
-      if (type === "all" || type === "projects") {
-        const where = {
-          userId,
-          OR: [
-            { name: { contains: query } },
-            { description: { contains: query } },
-            { technologies: { some: { name: { contains: query.toLowerCase() } } } },
-          ],
-        };
-        const [rows, count] = await Promise.all([
-          prisma.project.findMany({
-            where,
-            include: { technologies: true },
-            orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-            skip: offset,
-            take: pageSize,
-          }),
-          prisma.project.count({ where }),
-        ]);
-        total = type === "projects" ? count : total + count;
-        for (const row of rows) {
-          items.push({
-            kind: "project",
-            id: row.id,
-            title: row.name,
-            snippet: snippet(row.description, query),
-            status: row.status,
-            url: row.url ?? undefined,
-            tags: row.technologies.map((t: { projectId: bigint; name: string }) => t.name),
-            updatedAt: row.updatedAt,
-            createdAt: row.createdAt,
-          });
-        }
-      }
+      const items: SearchResultItem[] = [
+        ...knowledgeRows.map((row): SearchResultItem => ({
+          kind: "knowledge",
+          id: row.id,
+          title: row.title,
+          snippet: snippet(row.content, query),
+          category: row.category,
+          tags: row.tags.map((t) => t.tag.name),
+          updatedAt: row.updatedAt,
+          createdAt: row.createdAt,
+        })),
+        ...projectRows.map((row): SearchResultItem => ({
+          kind: "project",
+          id: row.id,
+          title: row.name,
+          snippet: snippet(row.description, query),
+          status: row.status,
+          url: row.url ?? undefined,
+          tags: row.technologies.map((t) => t.name),
+          updatedAt: row.updatedAt,
+          createdAt: row.createdAt,
+        })),
+      ];
 
-      if (type === "all") {
-        items.sort((a, b) => {
-          if (b.updatedAt.getTime() !== a.updatedAt.getTime()) {
-            return b.updatedAt.getTime() - a.updatedAt.getTime();
-          }
-          return Number(b.id) - Number(a.id);
-        });
-        items.splice(pageSize);
-        total = Math.max(
-          type === "all"
-            ? ((await prisma.knowledgeEntry.count({
-                where: {
-                  userId,
-                  OR: [
-                    { title: { contains: query } },
-                    { content: { contains: query } },
-                    { tags: { some: { tag: { name: { contains: query.toLowerCase() } } } } },
-                  ],
-                },
-              })) as number) +
-                ((await prisma.project.count({
-                  where: {
-                    userId,
-                    OR: [
-                      { name: { contains: query } },
-                      { description: { contains: query } },
-                      { technologies: { some: { name: { contains: query.toLowerCase() } } } },
-                    ],
-                  },
-                })) as number)
-            : total,
-          items.length,
-        );
-      }
+      // Con un solo tipo, la base de datos ya devolvió la página ordenada.
+      const pageItems =
+        type === "all" ? items.sort(compareByRecency).slice(offset, offset + pageSize) : items;
 
-      return { items, total, page, pageSize };
+      return { items: pageItems, total: knowledgeCount + projectCount, page, pageSize };
     },
 
     async dashboard(userId, limit) {

@@ -50,6 +50,7 @@ PROGRESS.md
 Prompt maestro*.md
 docs/design-system/
 docs/superpowers/
+.superpowers/
 .mcp.json
 .claude/
 

@@ -226,15 +226,18 @@ describe("searchRepository.search con varias palabras", () => {
 
   it("el snippet encuentra la palabra sin distinguir mayúsculas ni tildes", async () => {
     const row = knowledge(1, 1);
-    row.content = `${"x".repeat(200)} copia de seguridad con Café y Docker`;
+    row.content = `${"x".repeat(200)} Café ${"y".repeat(200)}`;
     knowledgeRows.push(row);
 
-    const { items } = await search("cafe docker", "knowledge");
+    const { items } = await search("cafe", "knowledge");
 
-    const snippet = items[0]?.snippet;
+    const snippet = items[0]?.snippet ?? "";
+    expect(snippet.startsWith("… ")).toBe(true);
+    expect(snippet.endsWith(" …")).toBe(true);
+    // La ventana está centrada en "Café": como mucho 60 caracteres antes.
+    const before = snippet.slice(2, snippet.indexOf("Café"));
     expect(snippet).toContain("Café");
-    expect(snippet?.startsWith("… ")).toBe(true);
-    expect(snippet?.startsWith("xxxx")).toBe(false);
+    expect(before.length).toBeLessThanOrEqual(60);
   });
 
   it("el snippet usa el inicio del texto si ninguna palabra aparece", async () => {

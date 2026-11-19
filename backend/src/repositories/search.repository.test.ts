@@ -226,12 +226,15 @@ describe("searchRepository.search con varias palabras", () => {
 
   it("el snippet encuentra la palabra sin distinguir mayúsculas ni tildes", async () => {
     const row = knowledge(1, 1);
-    row.content = `${"x".repeat(100)} copia de seguridad con Café y Docker`;
+    row.content = `${"x".repeat(200)} copia de seguridad con Café y Docker`;
     knowledgeRows.push(row);
 
     const { items } = await search("cafe docker", "knowledge");
 
-    expect(items[0]?.snippet).toContain("Café");
+    const snippet = items[0]?.snippet;
+    expect(snippet).toContain("Café");
+    expect(snippet?.startsWith("… ")).toBe(true);
+    expect(snippet?.startsWith("xxxx")).toBe(false);
   });
 
   it("el snippet usa el inicio del texto si ninguna palabra aparece", async () => {

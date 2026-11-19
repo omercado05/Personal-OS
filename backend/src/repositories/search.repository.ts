@@ -68,19 +68,19 @@ function fold(text: string): string {
   return Array.from(text, foldChar).join("");
 }
 
-function snippet(text: string | null | undefined, terms: string[], length = 160): string {
+/** `foldedTerms` ya vienen plegados con `fold` (se pliegan una vez por búsqueda). */
+function snippet(text: string | null | undefined, foldedTerms: string[], length = 160): string {
   if (!text) {
     return "";
   }
   const folded = fold(text);
   let index = -1;
   let matchLength = 0;
-  for (const term of terms) {
-    const foldedTerm = fold(term);
-    const found = folded.indexOf(foldedTerm);
+  for (const term of foldedTerms) {
+    const found = folded.indexOf(term);
     if (found !== -1 && (index === -1 || found < index)) {
       index = found;
-      matchLength = foldedTerm.length;
+      matchLength = term.length;
     }
   }
   if (index === -1) {
@@ -135,6 +135,7 @@ export function createSearchRepository(): SearchRepository {
       const { userId, q, type, page, pageSize } = params;
       const offset = (page - 1) * pageSize;
       const terms = searchTerms(q);
+      const foldedTerms = terms.map(fold);
       const includeKnowledge = type === "all" || type === "knowledge";
       const includeProjects = type === "all" || type === "projects";
       // Con "all" el offset se aplica sobre la lista combinada: cada tabla aporta
@@ -186,7 +187,7 @@ export function createSearchRepository(): SearchRepository {
           kind: "knowledge",
           id: row.id,
           title: row.title,
-          snippet: snippet(row.content, terms),
+          snippet: snippet(row.content, foldedTerms),
           category: row.category,
           tags: row.tags.map((t) => t.tag.name),
           updatedAt: row.updatedAt,
@@ -196,7 +197,7 @@ export function createSearchRepository(): SearchRepository {
           kind: "project",
           id: row.id,
           title: row.name,
-          snippet: snippet(row.description, terms),
+          snippet: snippet(row.description, foldedTerms),
           status: row.status,
           url: row.url ?? undefined,
           tags: row.technologies.map((t) => t.name),

@@ -11,6 +11,9 @@ import { deleteKnowledge, listKnowledge, listTags } from "@/lib/knowledge";
 import type { KnowledgeEntry, ListMeta, Tag } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import Skeleton from "@/components/dashboard/Skeleton";
+import { PageHero } from "@/components/visual/PageHero";
+import { Timeline } from "@/components/visual/Timeline";
+import { groupByRecency } from "@/lib/timeline";
 
 const PAGE_SIZE = 10;
 
@@ -133,79 +136,76 @@ export default function KnowledgePage() {
   }
 
   const hasFilters = Boolean(q || category || tag);
+  const total = meta?.total ?? 0;
 
   return (
     <div className="panel">
-      <header className="panel__header">
-        <div>
-          <p className="eyebrow">Conocimiento</p>
-          <h1>Knowledge</h1>
-        </div>
+      <PageHero eyebrow="Conocimiento" count={total} noun={total === 1 ? "nota" : "notas"}>
         <div className="row-actions">
           <Link className="link-button small" href="/knowledge/new">
             <Plus size={16} aria-hidden="true" />
             Nueva entrada
           </Link>
         </div>
-      </header>
 
-      <form className="toolbar" onSubmit={applyFilters}>
-        <div className="input-group">
-          <span className="input-group__icon" aria-hidden="true">
-            <Search size={16} />
-          </span>
-          <input
-            className="input"
-            type="search"
-            value={qInput}
-            onChange={(event) => setQInput(event.target.value)}
-            placeholder="Buscar por título o contenido…"
-            aria-label="Buscar entradas"
-          />
-        </div>
-        <select
-          className="select"
-          value={category}
-          onChange={(event) => {
-            setCategory(event.target.value);
-            setPage(1);
-            refresh();
-          }}
-          aria-label="Filtrar por categoría"
-        >
-          <option value="">Todas las categorías</option>
-          {KNOWLEDGE_CATEGORIES.map((value) => (
-            <option key={value} value={value}>
-              {KNOWLEDGE_CATEGORY_LABELS[value]}
-            </option>
-          ))}
-        </select>
-        <select
-          className="select"
-          value={tag}
-          onChange={(event) => {
-            setTag(event.target.value);
-            setPage(1);
-            refresh();
-          }}
-          aria-label="Filtrar por tag"
-        >
-          <option value="">Todos los tags</option>
-          {tags.map((item) => (
-            <option key={item.id} value={item.name}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="primary">
-          Filtrar
-        </button>
-        {hasFilters ? (
-          <button type="button" className="ghost" onClick={clearFilters}>
-            Limpiar
+        <form className="toolbar" onSubmit={applyFilters}>
+          <div className="input-group">
+            <span className="input-group__icon" aria-hidden="true">
+              <Search size={16} />
+            </span>
+            <input
+              className="input"
+              type="search"
+              value={qInput}
+              onChange={(event) => setQInput(event.target.value)}
+              placeholder="Buscar por título o contenido…"
+              aria-label="Buscar entradas"
+            />
+          </div>
+          <select
+            className="select"
+            value={category}
+            onChange={(event) => {
+              setCategory(event.target.value);
+              setPage(1);
+              refresh();
+            }}
+            aria-label="Filtrar por categoría"
+          >
+            <option value="">Todas las categorías</option>
+            {KNOWLEDGE_CATEGORIES.map((value) => (
+              <option key={value} value={value}>
+                {KNOWLEDGE_CATEGORY_LABELS[value]}
+              </option>
+            ))}
+          </select>
+          <select
+            className="select"
+            value={tag}
+            onChange={(event) => {
+              setTag(event.target.value);
+              setPage(1);
+              refresh();
+            }}
+            aria-label="Filtrar por tag"
+          >
+            <option value="">Todos los tags</option>
+            {tags.map((item) => (
+              <option key={item.id} value={item.name}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="primary">
+            Filtrar
           </button>
-        ) : null}
-      </form>
+          {hasFilters ? (
+            <button type="button" className="ghost" onClick={clearFilters}>
+              Limpiar
+            </button>
+          ) : null}
+        </form>
+      </PageHero>
 
       {error ? (
         <div className="alert" role="alert">
@@ -263,9 +263,11 @@ export default function KnowledgePage() {
       ) : null}
 
       {entries && entries.length > 0 ? (
-        <ul className="data-list">
-          {entries.map((entry) => (
-            <li key={entry.id} className="data-list__item">
+        <Timeline
+          groups={groupByRecency(entries, (entry) => entry.updatedAt)}
+          getKey={(entry) => String(entry.id)}
+          renderItem={(entry) => (
+            <>
               <div className="data-list__main">
                 <div className="data-list__title">
                   <Link href={`/knowledge/${entry.id}`}>{entry.title}</Link>
@@ -292,9 +294,9 @@ export default function KnowledgePage() {
                   Eliminar
                 </button>
               </div>
-            </li>
-          ))}
-        </ul>
+            </>
+          )}
+        />
       ) : null}
 
       {meta ? (

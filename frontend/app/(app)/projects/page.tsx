@@ -7,8 +7,11 @@ import { Plus, Search } from "lucide-react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Pagination from "@/components/ui/Pagination";
 import Skeleton from "@/components/dashboard/Skeleton";
+import { PageHero } from "@/components/visual/PageHero";
+import { Timeline } from "@/components/visual/Timeline";
 import { PROJECT_STATUSES, PROJECT_STATUS_LABELS } from "@/lib/constants";
 import { deleteProject, listProjects } from "@/lib/projects";
+import { groupByRecency } from "@/lib/timeline";
 import type { ListMeta, Project } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
@@ -110,62 +113,59 @@ export default function ProjectsPage() {
   }
 
   const hasFilters = Boolean(q || status);
+  const total = meta?.total ?? 0;
 
   return (
     <div className="panel">
-      <header className="panel__header">
-        <div>
-          <p className="eyebrow">Proyectos</p>
-          <h1>Projects</h1>
-        </div>
+      <PageHero eyebrow="Proyectos" count={total} noun={total === 1 ? "proyecto" : "proyectos"}>
         <div className="row-actions">
           <Link className="link-button small" href="/projects/new">
             <Plus size={16} aria-hidden="true" />
             Nuevo proyecto
           </Link>
         </div>
-      </header>
 
-      <form className="toolbar" onSubmit={applyFilters}>
-        <div className="input-group">
-          <span className="input-group__icon" aria-hidden="true">
-            <Search size={16} />
-          </span>
-          <input
-            className="input"
-            type="search"
-            value={qInput}
-            onChange={(event) => setQInput(event.target.value)}
-            placeholder="Buscar por nombre o descripción…"
-            aria-label="Buscar proyectos"
-          />
-        </div>
-        <select
-          className="select"
-          value={status}
-          onChange={(event) => {
-            setStatus(event.target.value);
-            setPage(1);
-            refresh();
-          }}
-          aria-label="Filtrar por estado"
-        >
-          <option value="">Todos los estados</option>
-          {PROJECT_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {PROJECT_STATUS_LABELS[value]}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="primary">
-          Filtrar
-        </button>
-        {hasFilters ? (
-          <button type="button" className="ghost" onClick={clearFilters}>
-            Limpiar
+        <form className="toolbar" onSubmit={applyFilters}>
+          <div className="input-group">
+            <span className="input-group__icon" aria-hidden="true">
+              <Search size={16} />
+            </span>
+            <input
+              className="input"
+              type="search"
+              value={qInput}
+              onChange={(event) => setQInput(event.target.value)}
+              placeholder="Buscar por nombre o descripción…"
+              aria-label="Buscar proyectos"
+            />
+          </div>
+          <select
+            className="select"
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value);
+              setPage(1);
+              refresh();
+            }}
+            aria-label="Filtrar por estado"
+          >
+            <option value="">Todos los estados</option>
+            {PROJECT_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {PROJECT_STATUS_LABELS[value]}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="primary">
+            Filtrar
           </button>
-        ) : null}
-      </form>
+          {hasFilters ? (
+            <button type="button" className="ghost" onClick={clearFilters}>
+              Limpiar
+            </button>
+          ) : null}
+        </form>
+      </PageHero>
 
       {error ? (
         <div className="alert" role="alert">
@@ -223,9 +223,11 @@ export default function ProjectsPage() {
       ) : null}
 
       {projects && projects.length > 0 ? (
-        <ul className="data-list">
-          {projects.map((project) => (
-            <li key={project.id} className="data-list__item">
+        <Timeline
+          groups={groupByRecency(projects, (project) => project.updatedAt)}
+          getKey={(project) => String(project.id)}
+          renderItem={(project) => (
+            <>
               <div className="data-list__main">
                 <div className="data-list__title">
                   <Link href={`/projects/${project.id}`}>{project.name}</Link>
@@ -256,9 +258,9 @@ export default function ProjectsPage() {
                   Eliminar
                 </button>
               </div>
-            </li>
-          ))}
-        </ul>
+            </>
+          )}
+        />
       ) : null}
 
       {meta ? (

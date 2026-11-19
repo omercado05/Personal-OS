@@ -24,6 +24,8 @@ test("Knowledge: crear, editar, filtrar y eliminar una entrada", async ({ page }
   await page.goto("/knowledge");
   await page.getByLabel("Buscar entradas").fill(edited);
   await expect(page.getByRole("link", { name: edited })).toBeVisible();
+  // Línea de tiempo: la entrada recién editada cuelga del grupo «Hoy».
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
 
   await page.goto(detailUrl);
   await deleteFromDetail(page);

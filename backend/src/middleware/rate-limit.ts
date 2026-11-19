@@ -1,4 +1,4 @@
-import rateLimit from "@fastify/rate-limit";
+import rateLimit, { normalizeIP } from "@fastify/rate-limit";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { AppError } from "../lib/errors.js";
@@ -27,9 +27,23 @@ export function resolveRateLimits(overrides: Partial<RateLimits> = {}): RateLimi
   return { ...RATE_LIMITS, ...overrides };
 }
 
-/** Presupuesto aplicable a una petición según su método. */
-function budgetFor(request: FastifyRequest, limits: RateLimits): number {
-  return request.method === "GET" ? limits.read : limits.write;
+/** Métodos que no modifican datos: comparten el presupuesto de lectura. */
+const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+type Bucket = "read" | "write";
+
+function bucketFor(request: FastifyRequest): Bucket {
+  return READ_METHODS.has(request.method) ? "read" : "write";
+}
+
+/**
+ * Clave del contador: IP + tipo de petición. El plugin lleva un único contador
+ * por clave y `max` solo cambia el tope con el que se compara; con la IP sola,
+ * las lecturas al navegar agotaban el presupuesto de escritura y un guardado
+ * podía fallar con 429. Con contadores separados cada presupuesto es independiente.
+ */
+function keyFor(request: FastifyRequest): string {
+  return `${normalizeIP(request.ip)}:${bucketFor(request)}`;
 }
 
 /**
@@ -46,8 +60,9 @@ function budgetFor(request: FastifyRequest, limits: RateLimits): number {
 export function registerRateLimit(app: FastifyInstance, limits: RateLimits): void {
   void app.register(rateLimit, {
     global: true,
-    // Las escrituras consumen un presupuesto propio, más ajustado.
-    max: (request) => budgetFor(request, limits),
+    // Contadores separados por tipo (ver `keyFor`); las escrituras tienen un tope más ajustado.
+    keyGenerator: keyFor,
+    max: (request) => limits[bucketFor(request)],
     timeWindow: "1 minute",
     errorResponseBuilder: (_request, context) =>
       new AppError(

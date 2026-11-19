@@ -87,6 +87,53 @@ describe("rate limiting", () => {
     }
   });
 
+  it("las lecturas no gastan el presupuesto de escritura", async () => {
+    const app = await makeApp(limits);
+    try {
+      // Navegar (lecturas) dentro de su propio presupuesto…
+      for (let i = 0; i < 3; i += 1) {
+        const read = await app.inject({ method: "GET", url: "/api/v1/health" });
+        expect(read.statusCode).toBe(200);
+      }
+
+      // …no impide la primera escritura del minuto (503: auth sin configurar).
+      const write = await app.inject({ method: "POST", url: "/api/v1/knowledge", payload: {} });
+      expect(write.statusCode).toBe(503);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("las verificaciones previas CORS (OPTIONS) no gastan el presupuesto de escritura", async () => {
+    const app = await makeApp(limits);
+    try {
+      const url = "/api/v1/knowledge";
+      await app.inject({
+        method: "OPTIONS",
+        url,
+        headers: { origin: "http://localhost:3000", "access-control-request-method": "POST" },
+      });
+
+      const write = await app.inject({ method: "POST", url, payload: {} });
+      expect(write.statusCode).toBe(503);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("las escrituras no gastan el presupuesto de lectura", async () => {
+    const app = await makeApp(limits);
+    try {
+      await app.inject({ method: "POST", url: "/api/v1/knowledge", payload: {} });
+
+      const read = await app.inject({ method: "GET", url: "/api/v1/health" });
+      expect(read.statusCode).toBe(200);
+      expect(read.headers["x-ratelimit-remaining"]).toBe("2");
+    } finally {
+      await app.close();
+    }
+  });
+
   it("da a la búsqueda un presupuesto propio", async () => {
     const app = await makeApp(limits);
     try {

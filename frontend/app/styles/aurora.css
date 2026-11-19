@@ -623,15 +623,21 @@ button.primary:hover:not(:disabled)::after,
   background: var(--accent);
 }
 
-/* Atenuado (p. ej. tareas completadas): el texto no baja de opacidad para
-   mantener el contraste (4.5:1); se tacha el título, el texto pasa a
-   `--text-muted` y solo se atenúan las partes decorativas. */
+/* Atenuado (p. ej. tareas completadas): sin bajar la opacidad del texto, para
+   mantener el contraste (>= 4.5:1). Título tachado y en `--text-muted`;
+   las etiquetas pasan a `--text-muted` con borde y fondo neutros; solo se
+   atenúa el hito de la línea (decoración). */
 .timeline__item.is-dimmed .data-list__title a {
   color: var(--text-muted);
   text-decoration: line-through;
 }
 
-.timeline__item.is-dimmed .badge,
+.timeline__item.is-dimmed .badge {
+  color: var(--text-muted);
+  background: rgba(154, 164, 182, 0.08);
+  border-color: rgba(154, 164, 182, 0.25);
+}
+
 .timeline__item.is-dimmed::after {
   opacity: 0.55;
 }

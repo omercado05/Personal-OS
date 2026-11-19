@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useState } from "react";
 
 const PARTICLES = 12;
 const DISTANCE = 34;
@@ -13,7 +14,7 @@ const VECTORS = Array.from({ length: PARTICLES }, (_, index) => {
 });
 
 type BurstProps = {
-  /** Cada cambio (a un valor distinto de 0) lanza una nueva ráfaga. */
+  /** Cada cambio posterior al montaje (a un valor distinto de 0) lanza una nueva ráfaga. */
   trigger: number;
 };
 
@@ -24,7 +25,9 @@ type BurstProps = {
  */
 export function Burst({ trigger }: BurstProps) {
   const reduceMotion = useReducedMotion();
-  if (trigger === 0 || reduceMotion) return null;
+  // El valor con el que se monta no dispara: solo los cambios posteriores.
+  const [mounted] = useState(trigger);
+  if (trigger === 0 || trigger === mounted || reduceMotion) return null;
 
   return (
     <span className="burst" aria-hidden="true" key={trigger}>

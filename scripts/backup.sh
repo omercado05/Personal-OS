@@ -16,6 +16,8 @@
 # Variables de entorno opcionales:
 #   BACKUP_DIR             (por defecto ./backups)
 #   BACKUP_RETENTION_DAYS  (por defecto 14)
+#   BACKUP_OFFSITE_DIR y demás: ver scripts/backup-offsite.sh (copia cifrada
+#   fuera del equipo al terminar).
 #
 # Pensado para lanzarse desde el repositorio y para programarse con cron, p. ej.
 # para una copia diaria a las 03:30:
@@ -92,6 +94,11 @@ while IFS= read -r old; do
   rm -rf "$old"
   deleted=$((deleted + 1))
 done < <(find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d -name '20*-*-*_*' -mtime "+$RETENTION_DAYS")
-[[ $deleted -gt 0 ]] && echo "    ($deleted backup(s) antiguo(s) eliminado(s))"
+if [[ $deleted -gt 0 ]]; then
+  echo "    ($deleted backup(s) antiguo(s) eliminado(s))"
+fi
+
+# --- Copia cifrada fuera del equipo (si BACKUP_OFFSITE_DIR está configurada) --
+"$ROOT/scripts/backup-offsite.sh" "$DEST"
 
 echo "==> Backup completado."

@@ -55,7 +55,7 @@ repositories` y filtra todos los datos por el usuario autenticado.
 ├─ frontend/            # App Next.js
 ├─ backend/             # API Fastify + Prisma (schema y migraciones en prisma/)
 ├─ docker/              # Ficheros de apoyo de los contenedores
-├─ scripts/backup.sh    # Copias de seguridad de MySQL y Postgres
+├─ scripts/            # Backups de MySQL y Postgres, con copia cifrada externa
 ├─ docs/runbook.md      # Guía de operación
 ├─ docker-compose.yml   # Stack completo (6 servicios)
 └─ .env.example         # Todas las variables, con valores de ejemplo
@@ -159,7 +159,8 @@ tipos, los tests y el build de ambos proyectos.
 
 [`docs/runbook.md`](./docs/runbook.md) explica cómo arrancar y actualizar la aplicación,
 configurar el acceso remoto con Tailscale (`PUBLIC_HOST`), y hacer y restaurar copias de
-seguridad con `scripts/backup.sh`.
+seguridad con `scripts/backup.sh`, que además deja una copia cifrada (gpg, AES-256)
+fuera del equipo, por ejemplo en una carpeta sincronizada con OneDrive.
 
 ## Licencia
 

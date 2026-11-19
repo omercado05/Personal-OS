@@ -107,9 +107,37 @@ crontab -e
 > `crontab -l`; los mensajes van a `backups/backup.log`. El servicio `cron` debe
 > estar activo (`systemctl status cron`) — en WSL2 con systemd lo está.
 
-> Copia también `backups/` fuera de este equipo de vez en cuando (un disco
-> externo o la nube): un backup en el mismo disco no protege ante un fallo del
-> disco.
+### Copia cifrada fuera del equipo
+
+Un backup en el mismo disco no protege ante un fallo del disco. Por eso, al
+terminar, `backup.sh` llama a [`scripts/backup-offsite.sh`](../scripts/backup-offsite.sh),
+que empaqueta la copia del día, la **cifra con gpg (AES-256)** y la deja en
+`BACKUP_OFFSITE_DIR` como `personal-os-<fecha>.tar.gpg`. Antes de darla por buena
+comprueba que se descifra y contiene los volcados. En esa carpeta se conservan
+**30 días** (`BACKUP_OFFSITE_RETENTION_DAYS`).
+
+Configuración (una sola vez):
+
+```bash
+# 1) Carpeta de destino en .env (p. ej. una carpeta sincronizada con OneDrive):
+#    BACKUP_OFFSITE_DIR=/mnt/c/Users/<usuario>/OneDrive/Backups/personal-os
+# 2) Contraseña de cifrado, solo legible por tu usuario. Guárdala también en tu
+#    gestor de contraseñas: sin ella las copias no se pueden abrir.
+mkdir -p ~/.config/personal-os
+read -rsp "Contraseña de los backups: " P && printf '%s' "$P" > ~/.config/personal-os/backup-passphrase \
+  && chmod 600 ~/.config/personal-os/backup-passphrase && unset P
+```
+
+- Sin `BACKUP_OFFSITE_DIR`, no se hace copia externa. Sin archivo de contraseña,
+  el backup local se hace igual y el log muestra un `AVISO`.
+- OneDrive (u otro sincronizador) tiene que estar abierto para subir la copia.
+- Tests del script (sin Docker): `./scripts/tests/backup-offsite.test.sh`.
+
+Recuperar una copia externa (luego se restaura como en la §4):
+
+```bash
+gpg --decrypt personal-os-<fecha>.tar.gpg | tar -xf - -C backups/
+```
 
 ---
 

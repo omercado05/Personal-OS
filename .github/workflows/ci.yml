@@ -47,6 +47,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm test
       # Vitest fija su propio entorno (sin `.env` ni base de datos).
       - run: pnpm test
       - run: pnpm build
@@ -74,6 +75,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm test
       # `next build` exige las variables públicas de Hexclave; en CI basta con
       # valores de relleno porque solo se comprueba que la app compila.
       - run: pnpm build

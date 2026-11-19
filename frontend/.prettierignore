@@ -5,3 +5,6 @@ build
 coverage
 pnpm-lock.yaml
 next-env.d.ts
+playwright/.auth
+test-results
+playwright-report

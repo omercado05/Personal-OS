@@ -155,6 +155,28 @@ pnpm db:studio      # explorador visual de Prisma
 Cada push a `main` y cada pull request ejecutan en GitHub Actions el formato, el lint, los
 tipos, los tests y el build de ambos proyectos.
 
+### Tests end-to-end (Playwright)
+
+`frontend/e2e/` recorre la app en un navegador real contra el stack local de Docker: login y
+logout, crear/editar/filtrar/borrar en Knowledge, Projects y Tasks, y la búsqueda global. No
+se ejecutan en el CI (necesitan Hexclave en marcha).
+
+1. Crea en Hexclave (http://localhost:8101, proyecto de la app) un usuario de prueba con email
+   y contraseña, y añádelo al `.env` de la raíz como `E2E_USER_EMAIL` y `E2E_USER_PASSWORD`.
+2. La primera vez, instala el navegador y sus dependencias del sistema:
+
+   ```bash
+   cd frontend
+   pnpm exec playwright install chromium
+   sudo env "PATH=$PATH" pnpm exec playwright install-deps chromium
+   ```
+
+3. Con el stack levantado: `cd frontend && pnpm test:e2e`.
+
+Los datos que crean llevan el prefijo `e2e-` y se borran al terminar, aunque algún test falle.
+La API limita las escrituras a 60 por minuto: si repites la suite varias veces seguidas, espera
+un minuto entre ejecuciones.
+
 ## Operación
 
 [`docs/runbook.md`](./docs/runbook.md) explica cómo arrancar y actualizar la aplicación,

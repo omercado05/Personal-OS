@@ -15,7 +15,7 @@ test("Knowledge: crear, editar, filtrar y eliminar una entrada", async ({ page }
   await expect(page).toHaveURL(/\/knowledge\/\d+$/);
   await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
 
-  await page.getByRole("link", { name: "Editar entrada" }).click();
+  await page.getByRole("link", { name: "Editar", exact: true }).click();
   await page.getByLabel("Título").fill(edited);
   await page.getByRole("button", { name: "Guardar cambios" }).click();
   await expect(page.getByRole("heading", { level: 1, name: edited })).toBeVisible();
@@ -26,7 +26,7 @@ test("Knowledge: crear, editar, filtrar y eliminar una entrada", async ({ page }
   await expect(page.getByRole("link", { name: edited })).toBeVisible();
 
   await page.goto(detailUrl);
-  await deleteFromDetail(page, "Eliminar entrada");
+  await deleteFromDetail(page);
   await expect(page).toHaveURL(/\/knowledge$/);
   await page.getByLabel("Buscar entradas").fill(edited);
   await expect(page.getByRole("link", { name: edited })).toHaveCount(0);

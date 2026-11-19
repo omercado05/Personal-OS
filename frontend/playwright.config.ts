@@ -15,10 +15,10 @@ export const AUTH_FILE = path.join(__dirname, "playwright/.auth/user.json");
 
 export default defineConfig({
   testDir: "./e2e",
+  // Borra los datos de prueba aunque algún test falle a medias.
+  globalTeardown: "./e2e/global-teardown.ts",
   // Los tests comparten un único usuario de prueba: en serie, sin interferencias.
   workers: 1,
-  fullyParallel: false,
-  retries: 0,
   reporter: [["list"]],
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",

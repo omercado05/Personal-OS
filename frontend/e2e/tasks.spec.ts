@@ -20,7 +20,7 @@ test("Tasks: crear, completar, reabrir y eliminar una tarea", async ({ page }) =
   await page.getByRole("button", { name: "Marcar pendiente" }).click();
   await expect(page.getByRole("button", { name: "Marcar completada" })).toBeVisible();
 
-  await deleteFromDetail(page, "Eliminar tarea");
+  await deleteFromDetail(page);
   await expect(page).toHaveURL(/\/tasks$/);
   await page.getByLabel("Buscar tareas").fill(title);
   await expect(page.getByRole("link", { name: title })).toHaveCount(0);

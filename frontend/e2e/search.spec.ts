@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { AUTH_FILE } from "../playwright.config";
 import { deleteFromDetail, RUN_ID, uniqueName } from "./helpers";
@@ -14,7 +14,7 @@ async function createEntry(page: Page, title: string): Promise<string> {
 }
 
 /** Escribe en la búsqueda global y devuelve el contenedor de resultados. */
-async function globalSearch(page: Page, query: string) {
+async function globalSearch(page: Page, query: string): Promise<Locator> {
   await page.goto("/dashboard");
   await page.getByLabel("Buscar", { exact: true }).fill(query);
   const results = page.locator(".search__results");
@@ -23,13 +23,13 @@ async function globalSearch(page: Page, query: string) {
 }
 
 test.describe("Búsqueda global", () => {
-  const created: { url: string; deleteButton: string }[] = [];
+  const created: string[] = [];
 
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage({ storageState: AUTH_FILE });
-    for (const item of created) {
-      await page.goto(item.url);
-      await deleteFromDetail(page, item.deleteButton);
+    for (const url of created) {
+      await page.goto(url);
+      await deleteFromDetail(page);
     }
     await page.close();
   });
@@ -39,7 +39,7 @@ test.describe("Búsqueda global", () => {
     const cafe = uniqueName("Café de especialidad");
     const anio = uniqueName("Propósitos de año nuevo");
     for (const title of [backup, cafe, anio]) {
-      created.push({ url: await createEntry(page, title), deleteButton: "Eliminar entrada" });
+      created.push(await createEntry(page, title));
     }
 
     let results = await globalSearch(page, `docker ${RUN_ID} backup`);
@@ -68,6 +68,6 @@ test.describe("Búsqueda global", () => {
     await expect(link).toContainText("Pendiente");
     await link.click();
     await expect(page).toHaveURL(/\/tasks\/\d+$/);
-    created.push({ url: page.url(), deleteButton: "Eliminar tarea" });
+    created.push(page.url());
   });
 });

@@ -15,7 +15,7 @@ test("Projects: crear, editar, filtrar y eliminar un proyecto", async ({ page })
   await expect(page).toHaveURL(/\/projects\/\d+$/);
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
 
-  await page.getByRole("link", { name: "Editar proyecto" }).click();
+  await page.getByRole("link", { name: "Editar", exact: true }).click();
   await page.getByLabel("Nombre").fill(edited);
   await page.getByRole("button", { name: "Guardar cambios" }).click();
   await expect(page.getByRole("heading", { level: 1, name: edited })).toBeVisible();
@@ -26,7 +26,7 @@ test("Projects: crear, editar, filtrar y eliminar un proyecto", async ({ page })
   await expect(page.getByRole("link", { name: edited })).toBeVisible();
 
   await page.goto(detailUrl);
-  await deleteFromDetail(page, "Eliminar proyecto");
+  await deleteFromDetail(page);
   await expect(page).toHaveURL(/\/projects$/);
   await page.getByLabel("Buscar proyectos").fill(edited);
   await expect(page.getByRole("link", { name: edited })).toHaveCount(0);

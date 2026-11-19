@@ -57,8 +57,15 @@ function endOfLocalDay(date: Date): Date {
   return result;
 }
 
-/** Pliega un carácter (sin mayúsculas ni tilde) conservando la longitud del texto. */
+/**
+ * Pliega un carácter (sin mayúsculas ni tilde) conservando la longitud del texto.
+ * La ñ es una letra propia, no una n con tilde: se conserva, igual que la
+ * intercalación `utf8mb4_es_0900_ai_ci` de la base de datos.
+ */
 function foldChar(char: string): string {
+  if (char === "ñ" || char === "Ñ") {
+    return "ñ";
+  }
   const folded = char.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   return folded.length === char.length ? folded : char;
 }

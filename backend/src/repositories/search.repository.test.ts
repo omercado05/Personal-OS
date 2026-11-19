@@ -240,6 +240,18 @@ describe("searchRepository.search con varias palabras", () => {
     expect(before.length).toBeLessThanOrEqual(60);
   });
 
+  it("el snippet distingue la ñ de la n", async () => {
+    const row = knowledge(1, 1);
+    row.content = `${"x".repeat(200)} el ano viejo ${"y".repeat(200)} el año nuevo ${"z".repeat(200)}`;
+    knowledgeRows.push(row);
+
+    const { items } = await search("AÑO", "knowledge");
+
+    const snippet = items[0]?.snippet ?? "";
+    expect(snippet).toContain("año nuevo");
+    expect(snippet).not.toContain("ano viejo");
+  });
+
   it("el snippet usa el inicio del texto si ninguna palabra aparece", async () => {
     const row = knowledge(1, 1);
     row.content = "y".repeat(200);

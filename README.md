@@ -18,7 +18,7 @@ fuera de casa a través de Tailscale, sin abrir puertos ni contratar dominio.
   archived), descripción, URL y tecnologías.
 - **Tasks** — tareas con fecha de vencimiento, prioridad (baja, media, alta) y vínculo
   opcional a un proyecto. Se agrupan por día según tu zona horaria.
-- **Búsqueda global** — busca a la vez en conocimiento y proyectos (títulos, contenido,
+- **Búsqueda global** — busca a la vez en conocimiento, proyectos y tareas (títulos, contenido,
   etiquetas y tecnologías) desde la barra superior.
 - **Cuenta y seguridad** — inicio de sesión con Hexclave
   autoalojado; cada usuario solo ve sus propios datos. La API aplica límite de peticiones y
@@ -128,7 +128,7 @@ Hexclave (`Authorization: Bearer …`).
 | Knowledge | `GET/POST /knowledge`, `GET/PUT/DELETE /knowledge/:id`, `GET /tags`       |
 | Projects  | `GET/POST /projects`, `GET/PUT/DELETE /projects/:id`                      |
 | Tasks     | `GET/POST /tasks`, `GET/PUT/DELETE /tasks/:id`, `PATCH /tasks/:id/toggle` |
-| Búsqueda  | `GET /search?q=&type=all\|knowledge\|projects&page=&pageSize=`            |
+| Búsqueda  | `GET /search?q=&type=all\|knowledge\|projects\|tasks&page=&pageSize=`     |
 | Dashboard | `GET /dashboard`, `GET /dashboard/metrics?tz=`                            |
 
 ## Desarrollo

@@ -4,25 +4,34 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { formatDateTime } from "@/lib/format";
 import { useApi } from "@/lib/use-api";
 
 interface SearchItem {
-  kind: "knowledge" | "project";
+  kind: "knowledge" | "project" | "task";
   id: string;
   title: string;
   snippet: string;
   category?: string;
   status?: string;
+  dueAt?: string;
 }
 
 interface SearchResponse {
   data: SearchItem[];
 }
 
+/** Etiqueta y ruta de detalle por tipo de resultado. */
+const KIND_META: Record<string, { label: string; href: string }> = {
+  knowledge: { label: "Nota", href: "/knowledge/" },
+  project: { label: "Proyecto", href: "/projects/" },
+  task: { label: "Tarea", href: "/tasks/" },
+};
+
 const DEBOUNCE_MS = 250;
 const MIN_TERM_LENGTH = 2;
 
-/** Búsqueda global sobre conocimiento y proyectos (con debounce). */
+/** Búsqueda global sobre conocimiento, proyectos y tareas (con debounce). */
 export default function GlobalSearch() {
   const api = useApi();
   const [term, setTerm] = useState("");
@@ -101,7 +110,7 @@ export default function GlobalSearch() {
           type="search"
           className="search__input"
           aria-label="Buscar"
-          placeholder="Buscar en notas y proyectos…"
+          placeholder="Buscar en notas, proyectos y tareas…"
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           onFocus={() => setOpen(true)}
@@ -124,19 +133,29 @@ export default function GlobalSearch() {
           {!loading && !error && items.length === 0 ? (
             <p className="muted small">Sin resultados.</p>
           ) : null}
-          {items.map((item) => (
-            <Link
-              key={`${item.kind}-${item.id}`}
-              href={item.kind === "knowledge" ? `/knowledge/${item.id}` : `/projects/${item.id}`}
-              onClick={() => setOpen(false)}
-            >
-              <span className="search__kind">
-                {item.kind === "knowledge" ? "Nota" : "Proyecto"}
-              </span>
-              <span className="search__title">{item.title}</span>
-              {item.snippet ? <span className="muted small">{item.snippet}</span> : null}
-            </Link>
-          ))}
+          {items.map((item) => {
+            const meta = KIND_META[item.kind];
+            if (!meta) {
+              return null;
+            }
+            return (
+              <Link
+                key={`${item.kind}-${item.id}`}
+                href={`${meta.href}${item.id}`}
+                onClick={() => setOpen(false)}
+              >
+                <span className="search__kind">{meta.label}</span>
+                <span className="search__title">{item.title}</span>
+                {item.kind === "task" ? (
+                  <span className="muted small">
+                    {item.status === "COMPLETED" ? "Hecha" : "Pendiente"}
+                    {item.dueAt ? ` · vence ${formatDateTime(item.dueAt)}` : ""}
+                  </span>
+                ) : null}
+                {item.snippet ? <span className="muted small">{item.snippet}</span> : null}
+              </Link>
+            );
+          })}
         </div>
       ) : null}
     </div>

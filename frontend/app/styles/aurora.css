@@ -623,10 +623,36 @@ button.primary:hover:not(:disabled)::after,
   background: var(--accent);
 }
 
-/* Atenuado (p. ej. tareas completadas): sobre los hijos, porque la opacidad
-   del ítem la controla la cascada. */
-.timeline__item.is-dimmed > * {
-  opacity: 0.6;
+/* Atenuado (p. ej. tareas completadas): el texto no baja de opacidad para
+   mantener el contraste (4.5:1); se tacha el título, el texto pasa a
+   `--text-muted` y solo se atenúan las partes decorativas. */
+.timeline__item.is-dimmed .data-list__title a {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.timeline__item.is-dimmed .badge,
+.timeline__item.is-dimmed::after {
+  opacity: 0.55;
+}
+
+/* Ráfaga de partículas al completar (ver Burst.tsx). */
+.burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.burst__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 6px var(--accent-2);
 }
 
 @media (max-width: 820px) {
@@ -653,4 +679,10 @@ button.primary:hover:not(:disabled)::after,
   .timeline__item::after {
     transition: none;
   }
+}
+
+/* Envoltorio relativo del control que lanza la ráfaga. */
+.burst-anchor {
+  position: relative;
+  display: inline-flex;
 }

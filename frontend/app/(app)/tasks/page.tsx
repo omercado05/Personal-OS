@@ -12,6 +12,9 @@ import { useApi } from "@/lib/use-api";
 import Skeleton from "@/components/dashboard/Skeleton";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
+import { groupTasksByDue } from "@/lib/timeline";
+import { PageHero } from "@/components/visual/PageHero";
+import { Timeline } from "@/components/visual/Timeline";
 
 const PAGE_SIZE = 10;
 
@@ -94,45 +97,42 @@ export default function TasksPage() {
   }
 
   const hasFilters = Boolean(q);
+  const total = meta?.total ?? 0;
 
   return (
     <div className="panel">
-      <header className="panel__header">
-        <div>
-          <p className="eyebrow">Tareas</p>
-          <h1>Tasks</h1>
-        </div>
+      <PageHero eyebrow="Tareas" count={total} noun={total === 1 ? "tarea" : "tareas"}>
         <div className="row-actions">
           <Link className="link-button small" href="/tasks/new">
             <Plus size={16} aria-hidden="true" />
             Nueva tarea
           </Link>
         </div>
-      </header>
 
-      <form className="toolbar" onSubmit={applyFilters}>
-        <div className="input-group">
-          <span className="input-group__icon" aria-hidden="true">
-            <Search size={16} />
-          </span>
-          <input
-            className="input"
-            type="search"
-            value={qInput}
-            onChange={(e) => setQInput(e.target.value)}
-            placeholder="Buscar por título..."
-            aria-label="Buscar tareas"
-          />
-        </div>
-        <button type="submit" className="primary">
-          Filtrar
-        </button>
-        {hasFilters ? (
-          <button type="button" className="ghost" onClick={clearFilters}>
-            Limpiar
+        <form className="toolbar" onSubmit={applyFilters}>
+          <div className="input-group">
+            <span className="input-group__icon" aria-hidden="true">
+              <Search size={16} />
+            </span>
+            <input
+              className="input"
+              type="search"
+              value={qInput}
+              onChange={(e) => setQInput(e.target.value)}
+              placeholder="Buscar por título..."
+              aria-label="Buscar tareas"
+            />
+          </div>
+          <button type="submit" className="primary">
+            Filtrar
           </button>
-        ) : null}
-      </form>
+          {hasFilters ? (
+            <button type="button" className="ghost" onClick={clearFilters}>
+              Limpiar
+            </button>
+          ) : null}
+        </form>
+      </PageHero>
 
       {error ? (
         <div className="alert" role="alert">
@@ -188,9 +188,12 @@ export default function TasksPage() {
       ) : null}
 
       {tasks && tasks.length > 0 ? (
-        <ul className="data-list">
-          {tasks.map((t) => (
-            <li key={t.id} className="data-list__item">
+        <Timeline
+          groups={groupTasksByDue(tasks)}
+          getKey={(t) => String(t.id)}
+          dimmed={(t) => t.status === "COMPLETED"}
+          renderItem={(t) => (
+            <>
               <div className="data-list__main">
                 <div className="data-list__title">
                   <Link href={`/tasks/${t.id}`}>{t.title}</Link>
@@ -218,9 +221,9 @@ export default function TasksPage() {
                   Eliminar
                 </button>
               </div>
-            </li>
-          ))}
-        </ul>
+            </>
+          )}
+        />
       ) : null}
 
       {meta ? (

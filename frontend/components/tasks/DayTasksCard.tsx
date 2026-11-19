@@ -6,6 +6,7 @@ import { format, isBefore } from "date-fns";
 import { listTasks, toggleTask, deleteTask } from "@/lib/tasks";
 import type { Task } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { Burst } from "@/components/visual/Burst";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { TASK_PRIORITY_COLOR, TASK_OVERDUE_COLOR, TASK_COMPLETED_COLOR } from "@/lib/constants";
 
@@ -21,6 +22,7 @@ export default function DayTasksCard({ date }: DayTasksCardProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [burst, setBurst] = useState(0);
 
   useEffect(() => {
     if (!date) {
@@ -60,6 +62,7 @@ export default function DayTasksCard({ date }: DayTasksCardProps) {
     try {
       const res = await toggleTask(api, id);
       setTasks((prev) => prev.map((t) => (t.id === id ? res.data : t)));
+      if (res.data.status === "COMPLETED") setBurst((n) => n + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     }
@@ -148,13 +151,16 @@ export default function DayTasksCard({ date }: DayTasksCardProps) {
                     {t.project ? <span>Proyecto: {t.project.name}</span> : null}
                   </div>
                   <div className="row-actions">
-                    <button
-                      type="button"
-                      className="ghost small"
-                      onClick={() => handleToggle(t.id)}
-                    >
-                      {t.status === "PENDING" ? "Marcar completada" : "Marcar pendiente"}
-                    </button>
+                    <span className="burst-anchor">
+                      <button
+                        type="button"
+                        className="ghost small"
+                        onClick={() => handleToggle(t.id)}
+                      >
+                        {t.status === "PENDING" ? "Marcar completada" : "Marcar pendiente"}
+                      </button>
+                      <Burst trigger={burst} />
+                    </span>
                     <Link className="link-button ghost small" href={`/tasks/${t.id}/edit`}>
                       Editar
                     </Link>

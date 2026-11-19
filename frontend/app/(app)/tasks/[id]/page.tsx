@@ -8,6 +8,7 @@ import type { Task } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { format } from "date-fns";
+import { Burst } from "@/components/visual/Burst";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
 
 export default function TaskDetailPage() {
@@ -20,6 +21,7 @@ export default function TaskDetailPage() {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [burst, setBurst] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -46,6 +48,7 @@ export default function TaskDetailPage() {
     try {
       const res = await toggleTask(api, task.id);
       setTask(res.data);
+      if (res.data.status === "COMPLETED") setBurst((n) => n + 1);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo cambiar estado.");
     } finally {
@@ -83,18 +86,21 @@ export default function TaskDetailPage() {
             </Link>
           ) : null}
           {task ? (
-            <button
-              type="button"
-              className="ghost small"
-              onClick={handleToggle}
-              disabled={toggling}
-            >
-              {toggling
-                ? "..."
-                : task.status === "PENDING"
-                  ? "Marcar completada"
-                  : "Marcar pendiente"}
-            </button>
+            <span className="burst-anchor">
+              <button
+                type="button"
+                className="ghost small"
+                onClick={handleToggle}
+                disabled={toggling}
+              >
+                {toggling
+                  ? "..."
+                  : task.status === "PENDING"
+                    ? "Marcar completada"
+                    : "Marcar pendiente"}
+              </button>
+              <Burst trigger={burst} />
+            </span>
           ) : null}
           <button type="button" className="ghost small danger" onClick={() => setShowDelete(true)}>
             Eliminar

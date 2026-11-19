@@ -8,7 +8,7 @@ export const searchQuerySchema = z.object({
     z.string().trim().min(1, "El término de búsqueda es obligatorio").max(255),
   ),
   type: z
-    .preprocess(emptyToUndefined, z.enum(["all", "knowledge", "projects"]).default("all"))
+    .preprocess(emptyToUndefined, z.enum(["all", "knowledge", "projects", "tasks"]).default("all"))
     .optional()
     .transform((value) => value ?? "all"),
   page: z.coerce.number().int().min(1).default(1),

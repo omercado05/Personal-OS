@@ -125,6 +125,35 @@ describe("rutas de search y dashboard (protegidas)", () => {
     expect(body.meta).toEqual({ page: 1, pageSize: 10, total: 1, totalPages: 1 });
   });
 
+  it("GET /search acepta type=tasks y lo reenvía al servicio", async () => {
+    let received: string | undefined;
+    app = buildAppWith(
+      createFakeService({
+        async search(_userId, query) {
+          received = query.type;
+          return { items: [], total: 0, page: query.page, pageSize: query.pageSize };
+        },
+      }),
+    );
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/search?q=x&type=tasks",
+      headers: authHeader,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(received).toBe("tasks");
+  });
+
+  it("GET /search rechaza un type desconocido", async () => {
+    app = buildAppWith(createFakeService());
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/search?q=x&type=otro",
+      headers: authHeader,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
   it("GET /dashboard requiere token", async () => {
     app = buildAppWith(createFakeService());
     const response = await app.inject({ method: "GET", url: "/api/v1/dashboard" });

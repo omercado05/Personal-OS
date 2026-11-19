@@ -7,13 +7,14 @@ interface FakeRow {
 }
 
 interface FindManyArgs {
-  where?: { createdAt?: { gte?: Date }; AND?: unknown[] };
+  where?: { createdAt?: { gte?: Date }; AND?: unknown[]; userId?: bigint };
   skip?: number;
   take?: number;
 }
 
 const knowledgeRows: FakeRow[] = [];
 const projectRows: FakeRow[] = [];
+const taskRows: FakeRow[] = [];
 
 /** Simula `findMany` ordenado por updatedAt desc, id desc, con skip/take y `createdAt.gte`. */
 function fakeFindMany(rows: FakeRow[]) {
@@ -38,7 +39,10 @@ const prismaMock = {
     groupBy: vi.fn(async () => []),
   },
   tag: { count: vi.fn(async () => 0) },
-  task: { count: vi.fn(async () => 0) },
+  task: {
+    findMany: fakeFindMany(taskRows),
+    count: vi.fn(async () => taskRows.length),
+  },
 };
 
 vi.mock("../lib/prisma.js", () => ({ prisma: prismaMock }));
@@ -72,10 +76,115 @@ function project(id: number, day: number) {
   };
 }
 
+function task(id: number, day: number, extra: Record<string, unknown> = {}) {
+  const date = new Date(Date.UTC(2026, 0, day));
+  return {
+    id: BigInt(id),
+    title: `T${id}`,
+    description: null,
+    status: "PENDING",
+    dueAt: null,
+    updatedAt: date,
+    createdAt: date,
+    ...extra,
+  };
+}
+
+describe("searchRepository.search con type 'tasks'", () => {
+  beforeEach(() => {
+    knowledgeRows.length = 0;
+    projectRows.length = 0;
+    taskRows.length = 0;
+    vi.clearAllMocks();
+  });
+
+  it("filtra por usuario y por cada término sobre título y descripción", async () => {
+    taskRows.push(task(1, 5));
+
+    await createSearchRepository().search({
+      userId: 7n,
+      q: "pagar luz",
+      type: "tasks",
+      page: 1,
+      pageSize: 10,
+    });
+
+    const args = prismaMock.task.findMany.mock.calls[0]?.[0] as FindManyArgs;
+    expect(args.where?.userId).toBe(7n);
+    expect(args.where?.AND).toEqual([
+      { OR: [{ title: { contains: "pagar" } }, { description: { contains: "pagar" } }] },
+      { OR: [{ title: { contains: "luz" } }, { description: { contains: "luz" } }] },
+    ]);
+    expect(prismaMock.knowledgeEntry.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.project.findMany).not.toHaveBeenCalled();
+  });
+
+  it("tarea sin descripción ni fecha límite: snippet vacío y dueAt indefinido", async () => {
+    taskRows.push(task(1, 5));
+
+    const result = await createSearchRepository().search({
+      userId: 1n,
+      q: "t",
+      type: "tasks",
+      page: 1,
+      pageSize: 10,
+    });
+
+    expect(result.items[0]).toMatchObject({ kind: "task", title: "T1", snippet: "", tags: [] });
+    expect(result.items[0]?.dueAt).toBeUndefined();
+  });
+
+  it("incluye estado y fecha límite", async () => {
+    const dueAt = new Date("2026-02-01T10:00:00.000Z");
+    taskRows.push(task(1, 5, { status: "COMPLETED", dueAt, description: "Pagar la luz hoy" }));
+
+    const result = await createSearchRepository().search({
+      userId: 1n,
+      q: "luz",
+      type: "tasks",
+      page: 1,
+      pageSize: 10,
+    });
+
+    expect(result.items[0]).toMatchObject({ status: "COMPLETED", dueAt });
+    expect(result.items[0]?.snippet).toContain("luz");
+  });
+});
+
+describe("searchRepository.search con type 'all' y tres fuentes", () => {
+  beforeEach(() => {
+    knowledgeRows.length = 0;
+    projectRows.length = 0;
+    taskRows.length = 0;
+    // Fechas intercaladas: K(6,1) P(5,2) T(4,3) K(3) P(2) T(1) -> por día desc.
+    knowledgeRows.push(knowledge(1, 6), knowledge(2, 3));
+    projectRows.push(project(1, 5), project(2, 2));
+    taskRows.push(task(1, 4), task(2, 1));
+  });
+
+  it("pagina los tres tipos sin repetir ni perder resultados", async () => {
+    const pages = [];
+    for (const page of [1, 2, 3, 4]) {
+      const result = await createSearchRepository().search({
+        userId: 1n,
+        q: "",
+        type: "all",
+        page,
+        pageSize: 2,
+      });
+      pages.push({ titles: result.items.map((i) => i.title), total: result.total });
+    }
+
+    expect(pages.map((p) => p.titles)).toEqual([["K1", "P1"], ["T1", "K2"], ["P2", "T2"], []]);
+    expect(pages.every((p) => p.total === 6)).toBe(true);
+  });
+});
+
 describe("searchRepository.search con type 'all'", () => {
   beforeEach(() => {
     knowledgeRows.length = 0;
     projectRows.length = 0;
+    taskRows.length = 0;
     // Conocimiento más reciente (días 20-23) y proyectos más antiguos (días 10-13).
     knowledgeRows.push(...[1, 2, 3, 4].map((id) => knowledge(id, 19 + id)));
     projectRows.push(...[1, 2, 3, 4].map((id) => project(id, 9 + id)));

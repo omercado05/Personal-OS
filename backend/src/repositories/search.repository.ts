@@ -13,19 +13,20 @@ import {
 export interface SearchParams {
   userId: bigint;
   q: string;
-  type: "all" | "knowledge" | "projects";
+  type: "all" | "knowledge" | "projects" | "tasks";
   page: number;
   pageSize: number;
 }
 
 export interface SearchResultItem {
-  kind: "knowledge" | "project";
+  kind: "knowledge" | "project" | "task";
   id: bigint;
   title: string;
   snippet: string;
   url?: string;
   category?: string;
   status?: string;
+  dueAt?: Date;
   tags: string[];
   updatedAt: Date;
   createdAt: Date;
@@ -145,6 +146,7 @@ export function createSearchRepository(): SearchRepository {
       const foldedTerms = terms.map(fold);
       const includeKnowledge = type === "all" || type === "knowledge";
       const includeProjects = type === "all" || type === "projects";
+      const includeTasks = type === "all" || type === "tasks";
       // Con "all" el offset se aplica sobre la lista combinada: cada tabla aporta
       // sus primeros `offset + pageSize` resultados, se mezclan y se corta la página.
       const window =
@@ -167,27 +169,37 @@ export function createSearchRepository(): SearchRepository {
           { technologies: { some: { name: { contains: term.toLowerCase() } } } },
         ]),
       };
+      const taskWhere = {
+        userId,
+        ...everyTermMatches(terms, (term) => [
+          { title: { contains: term } },
+          { description: { contains: term } },
+        ]),
+      };
 
-      const [knowledgeRows, knowledgeCount, projectRows, projectCount] = await Promise.all([
-        includeKnowledge
-          ? prisma.knowledgeEntry.findMany({
-              where: knowledgeWhere,
-              include: { tags: { include: { tag: true } } },
-              orderBy,
-              ...window,
-            })
-          : [],
-        includeKnowledge ? prisma.knowledgeEntry.count({ where: knowledgeWhere }) : 0,
-        includeProjects
-          ? prisma.project.findMany({
-              where: projectWhere,
-              include: { technologies: true },
-              orderBy,
-              ...window,
-            })
-          : [],
-        includeProjects ? prisma.project.count({ where: projectWhere }) : 0,
-      ]);
+      const [knowledgeRows, knowledgeCount, projectRows, projectCount, taskRows, taskCount] =
+        await Promise.all([
+          includeKnowledge
+            ? prisma.knowledgeEntry.findMany({
+                where: knowledgeWhere,
+                include: { tags: { include: { tag: true } } },
+                orderBy,
+                ...window,
+              })
+            : [],
+          includeKnowledge ? prisma.knowledgeEntry.count({ where: knowledgeWhere }) : 0,
+          includeProjects
+            ? prisma.project.findMany({
+                where: projectWhere,
+                include: { technologies: true },
+                orderBy,
+                ...window,
+              })
+            : [],
+          includeProjects ? prisma.project.count({ where: projectWhere }) : 0,
+          includeTasks ? prisma.task.findMany({ where: taskWhere, orderBy, ...window }) : [],
+          includeTasks ? prisma.task.count({ where: taskWhere }) : 0,
+        ]);
 
       const items: SearchResultItem[] = [
         ...knowledgeRows.map((row): SearchResultItem => ({
@@ -211,13 +223,24 @@ export function createSearchRepository(): SearchRepository {
           updatedAt: row.updatedAt,
           createdAt: row.createdAt,
         })),
+        ...taskRows.map((row): SearchResultItem => ({
+          kind: "task",
+          id: row.id,
+          title: row.title,
+          snippet: snippet(row.description, foldedTerms),
+          status: row.status,
+          dueAt: row.dueAt ?? undefined,
+          tags: [],
+          updatedAt: row.updatedAt,
+          createdAt: row.createdAt,
+        })),
       ];
 
       // Con un solo tipo, la base de datos ya devolvió la página ordenada.
       const pageItems =
         type === "all" ? items.sort(compareByRecency).slice(offset, offset + pageSize) : items;
 
-      return { items: pageItems, total: knowledgeCount + projectCount, page, pageSize };
+      return { items: pageItems, total: knowledgeCount + projectCount + taskCount, page, pageSize };
     },
 
     async dashboard(userId, limit) {

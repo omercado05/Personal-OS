@@ -7,13 +7,15 @@ import {
 import type { SearchQuery } from "../schemas/search.schema.js";
 
 export interface SearchResultItemDto {
-  kind: "knowledge" | "project";
+  kind: "knowledge" | "project" | "task";
   id: bigint;
   title: string;
   snippet: string;
   url?: string;
   category?: string;
   status?: string;
+  /** Fecha límite (ISO); solo en tareas que la tienen. */
+  dueAt?: string;
   tags: string[];
   updatedAt: Date;
   createdAt: Date;
@@ -70,7 +72,7 @@ export function createSearchService(
       const result = await repository.search({
         userId,
         q: query.q,
-        type: query.type as "all" | "knowledge" | "projects",
+        type: query.type as "all" | "knowledge" | "projects" | "tasks",
         page: query.page,
         pageSize: query.pageSize,
       });
@@ -84,6 +86,7 @@ export function createSearchService(
           url: item.url,
           category: item.category,
           status: item.status,
+          dueAt: item.dueAt?.toISOString(),
           tags: item.tags,
           updatedAt: item.updatedAt,
           createdAt: item.createdAt,

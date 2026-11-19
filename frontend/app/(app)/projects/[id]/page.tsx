@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Skeleton from "@/components/dashboard/Skeleton";
+import { Reveal } from "@/components/visual/Reveal";
+import { useExitAnimation } from "@/components/visual/useExitAnimation";
 import { PROJECT_STATUS_LABELS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 import { deleteProject, getProject } from "@/lib/projects";
@@ -24,6 +27,7 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const exit = useExitAnimation();
 
   useEffect(() => {
     if (!id) {
@@ -60,10 +64,12 @@ export default function ProjectDetailPage() {
     }
     setDeleting(true);
     try {
+      await exit.play();
       await deleteProject(api, project.id);
       router.push("/projects");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo eliminar.");
+      exit.reset();
       setConfirming(false);
       setDeleting(false);
     }
@@ -96,80 +102,91 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="panel">
-      <Link className="breadcrumb" href="/projects">
-        <ArrowLeft size={14} aria-hidden="true" />
-        Projects
-      </Link>
-      <header className="panel__header">
-        <div>
-          <p className="eyebrow">Proyecto</p>
-          <h1>{project.name}</h1>
-        </div>
-        <div className="row-actions">
-          <Link className="link-button small" href={`/projects/${project.id}/edit`}>
-            <Pencil size={16} aria-hidden="true" />
-            Editar
+    <>
+      <motion.div className="panel detail" {...exit.motionProps}>
+        <header className="detail-head glass beam">
+          <Link className="breadcrumb" href="/projects">
+            <ArrowLeft size={14} aria-hidden="true" />
+            Projects
           </Link>
-          <button type="button" className="ghost small danger" onClick={() => setConfirming(true)}>
-            <Trash2 size={16} aria-hidden="true" />
-            Eliminar
-          </button>
-        </div>
-      </header>
+          <div className="detail-head__row">
+            <div className="detail-head__title">
+              <h1>{project.name}</h1>
+              <span className={`badge badge--${project.status}`}>
+                {PROJECT_STATUS_LABELS[project.status]}
+              </span>
+            </div>
+            <div className="row-actions">
+              <Link className="link-button small" href={`/projects/${project.id}/edit`}>
+                <Pencil size={16} aria-hidden="true" />
+                Editar
+              </Link>
+              <button
+                type="button"
+                className="ghost small danger"
+                onClick={() => setConfirming(true)}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </header>
 
-      <div className="data-list__meta">
-        <span className={`badge badge--${project.status}`}>
-          {PROJECT_STATUS_LABELS[project.status]}
-        </span>
-        {project.technologies.map((item) => (
-          <span key={item} className="tag">
-            #{item}
-          </span>
-        ))}
-      </div>
+        <Reveal className="detail-body">
+          {project.technologies.length > 0 ? (
+            <div className="data-list__meta">
+              {project.technologies.map((item) => (
+                <span key={item} className="tag">
+                  #{item}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
-      <dl className="detail-grid">
-        <div>
-          <dt>URL</dt>
-          <dd>
-            {project.url ? (
-              <a href={project.url} target="_blank" rel="noreferrer noopener">
-                {project.url}
-              </a>
-            ) : (
-              <span className="muted">—</span>
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>Repositorio</dt>
-          <dd>
-            {project.repositoryUrl ? (
-              <a href={project.repositoryUrl} target="_blank" rel="noreferrer noopener">
-                {project.repositoryUrl}
-              </a>
-            ) : (
-              <span className="muted">—</span>
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>Creado</dt>
-          <dd>{formatDateTime(project.createdAt)}</dd>
-        </div>
-        <div>
-          <dt>Actualizado</dt>
-          <dd>{formatDateTime(project.updatedAt)}</dd>
-        </div>
-      </dl>
+          <dl className="detail-grid glass">
+            <div>
+              <dt>URL</dt>
+              <dd>
+                {project.url ? (
+                  <a href={project.url} target="_blank" rel="noreferrer noopener">
+                    {project.url}
+                  </a>
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Repositorio</dt>
+              <dd>
+                {project.repositoryUrl ? (
+                  <a href={project.repositoryUrl} target="_blank" rel="noreferrer noopener">
+                    {project.repositoryUrl}
+                  </a>
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Creado</dt>
+              <dd>{formatDateTime(project.createdAt)}</dd>
+            </div>
+            <div>
+              <dt>Actualizado</dt>
+              <dd>{formatDateTime(project.updatedAt)}</dd>
+            </div>
+          </dl>
 
-      {project.description ? (
-        <>
-          <h2 className="section-title">Descripción</h2>
-          <div className="content-block">{project.description}</div>
-        </>
-      ) : null}
+          {project.description ? (
+            <>
+              <h2 className="section-title">Descripción</h2>
+              <div className="content-block">{project.description}</div>
+            </>
+          ) : null}
+        </Reveal>
+      </motion.div>
 
       <ConfirmDialog
         open={confirming}
@@ -184,6 +201,6 @@ export default function ProjectDetailPage() {
         onConfirm={confirmDelete}
         onCancel={() => setConfirming(false)}
       />
-    </div>
+    </>
   );
 }

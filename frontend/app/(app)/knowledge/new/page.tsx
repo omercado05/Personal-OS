@@ -10,7 +10,7 @@ export default function NewKnowledgePage() {
         <ArrowLeft size={14} aria-hidden="true" />
         Knowledge
       </Link>
-      <header className="panel__header">
+      <header className="panel__header detail-head glass">
         <div>
           <p className="eyebrow">Conocimiento</p>
           <h1>Nueva entrada</h1>

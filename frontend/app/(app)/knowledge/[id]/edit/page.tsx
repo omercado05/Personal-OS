@@ -49,7 +49,7 @@ export default function EditKnowledgePage() {
 
   return (
     <div className="panel">
-      <header className="panel__header">
+      <header className="panel__header detail-head glass">
         <div>
           <p className="eyebrow">Knowledge</p>
           <h1>Editar entrada</h1>

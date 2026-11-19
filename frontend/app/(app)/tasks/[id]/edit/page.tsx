@@ -58,7 +58,7 @@ export default function EditTaskPage() {
 
   return (
     <div className="panel">
-      <header className="panel__header">
+      <header className="panel__header detail-head glass">
         <div>
           <p className="eyebrow">Tareas</p>
           <h1>Editar tarea</h1>

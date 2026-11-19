@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Skeleton from "@/components/dashboard/Skeleton";
+import { Reveal } from "@/components/visual/Reveal";
+import { useExitAnimation } from "@/components/visual/useExitAnimation";
 import { KNOWLEDGE_CATEGORY_LABELS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 import { deleteKnowledge, getKnowledge } from "@/lib/knowledge";
@@ -24,6 +27,7 @@ export default function KnowledgeDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const exit = useExitAnimation();
 
   useEffect(() => {
     if (!id) {
@@ -60,10 +64,12 @@ export default function KnowledgeDetailPage() {
     }
     setDeleting(true);
     try {
+      await exit.play();
       await deleteKnowledge(api, entry.id);
       router.push("/knowledge");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo eliminar.");
+      exit.reset();
       setConfirming(false);
       setDeleting(false);
     }
@@ -96,52 +102,62 @@ export default function KnowledgeDetailPage() {
   }
 
   return (
-    <div className="panel">
-      <Link className="breadcrumb" href="/knowledge">
-        <ArrowLeft size={14} aria-hidden="true" />
-        Knowledge
-      </Link>
-      <header className="panel__header">
-        <div>
-          <p className="eyebrow">{KNOWLEDGE_CATEGORY_LABELS[entry.category]}</p>
-          <h1>{entry.title}</h1>
-        </div>
-        <div className="row-actions">
-          <Link className="link-button small" href={`/knowledge/${entry.id}/edit`}>
-            <Pencil size={16} aria-hidden="true" />
-            Editar
+    <>
+      <motion.div className="panel detail" {...exit.motionProps}>
+        <header className="detail-head glass beam">
+          <Link className="breadcrumb" href="/knowledge">
+            <ArrowLeft size={14} aria-hidden="true" />
+            Knowledge
           </Link>
-          <button type="button" className="ghost small danger" onClick={() => setConfirming(true)}>
-            <Trash2 size={16} aria-hidden="true" />
-            Eliminar
-          </button>
-        </div>
-      </header>
+          <div className="detail-head__row">
+            <div className="detail-head__title">
+              <h1>{entry.title}</h1>
+              <span className="badge">{KNOWLEDGE_CATEGORY_LABELS[entry.category]}</span>
+            </div>
+            <div className="row-actions">
+              <Link className="link-button small" href={`/knowledge/${entry.id}/edit`}>
+                <Pencil size={16} aria-hidden="true" />
+                Editar
+              </Link>
+              <button
+                type="button"
+                className="ghost small danger"
+                onClick={() => setConfirming(true)}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </header>
 
-      {entry.tags.length > 0 ? (
-        <div className="data-list__meta">
-          {entry.tags.map((item) => (
-            <span key={item} className="tag">
-              #{item}
-            </span>
-          ))}
-        </div>
-      ) : null}
+        <Reveal className="detail-body">
+          {entry.tags.length > 0 ? (
+            <div className="data-list__meta">
+              {entry.tags.map((item) => (
+                <span key={item} className="tag">
+                  #{item}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
-      <article className="content-block">
-        {entry.content || <span className="muted">Sin contenido.</span>}
-      </article>
+          <article className="content-block">
+            {entry.content || <span className="muted">Sin contenido.</span>}
+          </article>
 
-      <dl className="meta-list">
-        <div>
-          <dt>Creada</dt>
-          <dd>{formatDateTime(entry.createdAt)}</dd>
-        </div>
-        <div>
-          <dt>Actualizada</dt>
-          <dd>{formatDateTime(entry.updatedAt)}</dd>
-        </div>
-      </dl>
+          <dl className="meta-list">
+            <div>
+              <dt>Creada</dt>
+              <dd>{formatDateTime(entry.createdAt)}</dd>
+            </div>
+            <div>
+              <dt>Actualizada</dt>
+              <dd>{formatDateTime(entry.updatedAt)}</dd>
+            </div>
+          </dl>
+        </Reveal>
+      </motion.div>
 
       <ConfirmDialog
         open={confirming}
@@ -156,6 +172,6 @@ export default function KnowledgeDetailPage() {
         onConfirm={confirmDelete}
         onCancel={() => setConfirming(false)}
       />
-    </div>
+    </>
   );
 }

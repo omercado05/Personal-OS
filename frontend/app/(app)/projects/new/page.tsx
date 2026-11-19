@@ -10,7 +10,7 @@ export default function NewProjectPage() {
         <ArrowLeft size={14} aria-hidden="true" />
         Projects
       </Link>
-      <header className="panel__header">
+      <header className="panel__header detail-head glass">
         <div>
           <p className="eyebrow">Proyectos</p>
           <h1>Nuevo proyecto</h1>

@@ -78,7 +78,7 @@ export default function TaskForm({
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
+    <form className="form glass" onSubmit={handleSubmit}>
       {error ? (
         <div className="alert" role="alert">
           <span>{error}</span>

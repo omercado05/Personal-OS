@@ -49,7 +49,7 @@ export default function EditProjectPage() {
 
   return (
     <div className="panel">
-      <header className="panel__header">
+      <header className="panel__header detail-head glass">
         <div>
           <p className="eyebrow">Projects</p>
           <h1>Editar proyecto</h1>

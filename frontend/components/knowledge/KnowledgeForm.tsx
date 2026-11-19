@@ -58,7 +58,7 @@ export default function KnowledgeForm({ mode, initial }: KnowledgeFormProps) {
   }
 
   return (
-    <form className="form" onSubmit={onSubmit} noValidate>
+    <form className="form glass" onSubmit={onSubmit} noValidate>
       {error ? (
         <div className="alert" role="alert">
           <span>{error}</span>

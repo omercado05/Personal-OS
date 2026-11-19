@@ -6,6 +6,7 @@ import type {
   TaskStatus,
 } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { everyTermMatches, searchTerms } from "../lib/text-search.js";
 import {
   endOfDayInTimeZone,
   formatDateInTimeZone,
@@ -135,7 +136,10 @@ export function createTaskRepository(): TaskRepository {
         ...(params.priority ? { priority: params.priority } : {}),
         ...(params.projectId ? { projectId: params.projectId } : {}),
         ...(params.q
-          ? { OR: [{ title: { contains: params.q } }, { description: { contains: params.q } }] }
+          ? everyTermMatches(searchTerms(params.q), (term) => [
+              { title: { contains: term } },
+              { description: { contains: term } },
+            ])
           : {}),
         ...(dueAt ? { dueAt } : {}),
         // `overdue` y `dueToday` solo consideran tareas pendientes.
@@ -169,7 +173,10 @@ export function createTaskRepository(): TaskRepository {
         ...(params.priority ? { priority: params.priority } : {}),
         ...(params.projectId ? { projectId: params.projectId } : {}),
         ...(params.q
-          ? { OR: [{ title: { contains: params.q } }, { description: { contains: params.q } }] }
+          ? everyTermMatches(searchTerms(params.q), (term) => [
+              { title: { contains: term } },
+              { description: { contains: term } },
+            ])
           : {}),
         dueAt: dueAt ? { not: null, ...dueAt } : { not: null },
       };

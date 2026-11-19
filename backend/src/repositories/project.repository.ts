@@ -1,5 +1,6 @@
 import type { Prisma, Project, ProjectTechnology } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { everyTermMatches, searchTerms } from "../lib/text-search.js";
 
 export type ProjectWithTechnologies = Project & {
   technologies: ProjectTechnology[];
@@ -61,13 +62,12 @@ export function createProjectRepository(): ProjectRepository {
         userId: params.userId,
         ...(params.status ? { status: params.status } : {}),
         ...(params.q
-          ? {
-              OR: [
-                { name: { contains: params.q } },
-                { description: { contains: params.q } },
-                { technologies: { some: { name: { contains: params.q } } } },
-              ],
-            }
+          ? everyTermMatches(searchTerms(params.q), (term) => [
+              { name: { contains: term } },
+              { description: { contains: term } },
+              // Las tecnologías se guardan en minúsculas.
+              { technologies: { some: { name: { contains: term.toLowerCase() } } } },
+            ])
           : {}),
       };
 

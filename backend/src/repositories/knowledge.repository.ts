@@ -1,5 +1,6 @@
 import type { KnowledgeEntry, Tag } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { everyTermMatches, searchTerms } from "../lib/text-search.js";
 
 /** Entrada de conocimiento con sus tags resueltos. */
 export type KnowledgeEntryWithTags = KnowledgeEntry & { tags: Tag[] };
@@ -66,7 +67,10 @@ export function createKnowledgeRepository(): KnowledgeRepository {
         ...(params.category ? { category: params.category } : {}),
         ...(params.tag ? { tags: { some: { tag: { name: params.tag } } } } : {}),
         ...(params.q
-          ? { OR: [{ title: { contains: params.q } }, { content: { contains: params.q } }] }
+          ? everyTermMatches(searchTerms(params.q), (term) => [
+              { title: { contains: term } },
+              { content: { contains: term } },
+            ])
           : {}),
       };
 

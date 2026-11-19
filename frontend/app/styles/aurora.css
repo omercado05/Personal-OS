@@ -220,3 +220,238 @@ button.primary:hover:not(:disabled)::after,
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Dashboard «relato con scroll» (Tarea 6)
+   --------------------------------------------------------------------------- */
+
+/* Una columna centrada de bandas a todo el ancho. */
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 6vw, 4.5rem);
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.story-band {
+  min-width: 0;
+  scroll-margin-top: var(--space-6);
+}
+
+.story-band__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.story-band__inner > p {
+  margin: 0;
+}
+
+/* Cifras: una fila de seis contadores en escritorio; 3 y 2 columnas en pantallas menores. */
+.story .stat-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* El envoltorio de cascada no estira la tarjeta: igualamos alturas. */
+.story .stat-grid .stat-card {
+  height: 100%;
+}
+
+@media (min-width: 640px) {
+  .story .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .story .stat-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.story-band__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Apertura: tarjeta con haz permanente y cifra protagonista. */
+.story-opening {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: clamp(1.5rem, 5vw, 2.75rem);
+  border-radius: var(--radius-xl);
+}
+
+.story-opening .eyebrow {
+  margin: 0;
+}
+
+.story-opening h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.story-hero {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  margin: var(--space-2) 0 0;
+}
+
+.story-hero__number {
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif, sans-serif;
+  font-size: clamp(4rem, 14vw, 7rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.story-hero__text {
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  font-weight: 600;
+}
+
+.story-opening__sub {
+  margin: 0;
+}
+
+.story-opening .row-actions {
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.skeleton--hero {
+  width: min(320px, 100%);
+  height: 5rem;
+}
+
+/* Hoy: línea de tiempo horizontal; desplaza dentro de sí, nunca la página. */
+.today-line {
+  position: relative;
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 1.1rem 0.25rem 0.5rem;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+/* Raíl luminoso que une los hitos. */
+.today-line::before {
+  content: "";
+  position: absolute;
+  top: 1.4rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), transparent);
+  opacity: 0.6;
+}
+
+.today-line__item {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 11rem;
+  padding-top: 1.1rem;
+  scroll-snap-align: start;
+}
+
+/* Hito sobre el raíl. */
+.today-line__item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-35);
+}
+
+.today-line__time {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.today-line__title {
+  color: var(--text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.today-line__title:hover,
+.today-line__title:focus-visible {
+  color: var(--accent);
+}
+
+.story .chart-card__head h3,
+.story .card-min h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.story .chart-card > .muted.small {
+  margin: 0;
+}
+
+/* Indicador de progreso: puntos fijos a la derecha (solo escritorio). */
+.story-progress {
+  position: fixed;
+  top: 50%;
+  right: 1.25rem;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.story-progress__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--surface-border-strong);
+  transition:
+    background var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out),
+    box-shadow var(--dur-3) var(--ease-out);
+}
+
+.story-progress__dot.is-active {
+  background: var(--accent);
+  transform: scale(1.4);
+  box-shadow: 0 0 10px var(--accent-35);
+}
+
+@media (max-width: 1023px) {
+  .story-progress {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-progress__dot {
+    transition: none;
+  }
+}

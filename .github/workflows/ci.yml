@@ -47,7 +47,6 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
       # Vitest fija su propio entorno (sin `.env` ni base de datos).
       - run: pnpm test
       - run: pnpm build

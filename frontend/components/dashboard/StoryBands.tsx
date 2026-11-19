@@ -1,13 +1,26 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useInView } from "motion/react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Reveal } from "@/components/visual/Reveal";
 
 /**
+ * ¿Se ha visto ya la banda que contiene al componente? Fuera de una banda vale
+ * `true`, de modo que las cifras y gráficos sueltos animan en cuanto tienen datos.
+ */
+const BandSeenContext = createContext(true);
+
+/** `true` desde que la banda del relato que lo envuelve entra en pantalla (una vez). */
+export function useBandSeen(): boolean {
+  return useContext(BandSeenContext);
+}
+
+/**
  * Banda del relato del dashboard: sección a todo el ancho con su `h2`, que se
  * revela al entrar en pantalla. El `id` lo usa `StoryProgress` para marcar la
- * banda visible.
+ * banda visible. Expone a sus hijos (`useBandSeen`) si ya se ha visto, para que
+ * cuenten o dibujen su animación al revelarse y no al llegar los datos.
  */
 export function StoryBand({
   id,
@@ -19,15 +32,20 @@ export function StoryBand({
   children: ReactNode;
 }) {
   const headingId = `${id}-titulo`;
+  const ref = useRef<HTMLElement>(null);
+  // Mismo umbral que `Reveal`: la banda «se ha visto» cuando empieza a revelarse.
+  const seen = useInView(ref, { once: true, amount: "some", margin: "0px 0px -10% 0px" });
 
   return (
-    <section id={id} className="story-band" aria-labelledby={headingId}>
-      <Reveal className="story-band__inner">
-        <h2 id={headingId} className="story-band__title glass">
-          {label}
-        </h2>
-        {children}
-      </Reveal>
+    <section ref={ref} id={id} className="story-band" aria-labelledby={headingId}>
+      <BandSeenContext.Provider value={seen}>
+        <Reveal className="story-band__inner">
+          <h2 id={headingId} className="story-band__title glass">
+            {label}
+          </h2>
+          {children}
+        </Reveal>
+      </BandSeenContext.Provider>
     </section>
   );
 }

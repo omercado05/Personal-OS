@@ -14,6 +14,8 @@ import {
 
 import { AXIS_COLOR, GRID_COLOR, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "@/lib/chart-colors";
 
+import { useBandSeen } from "./StoryBands";
+
 const MONTH_LABELS = [
   "ene",
   "feb",
@@ -42,6 +44,8 @@ export default function ActivityChart({
   data: { month: string; knowledge: number; projects: number }[];
 }) {
   const reduceMotion = useReducedMotion();
+  // El gráfico se monta (y anima su dibujo) al verse su banda, no al llegar los datos.
+  const drawn = useBandSeen() || !!reduceMotion;
   const rows = data.map((row) => ({ ...row, label: shortMonth(row.month) }));
   const summary = rows
     .map((row) => `${row.label}: ${row.knowledge} entradas, ${row.projects} proyectos`)
@@ -49,62 +53,64 @@ export default function ActivityChart({
 
   return (
     <div className="chart chart--activity" role="img" aria-label={`Actividad mensual. ${summary}`}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id="fillKnowledge" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
-              <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.02} />
-            </linearGradient>
-            <linearGradient id="fillProjects" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-          <XAxis
-            dataKey="label"
-            tick={{ fill: AXIS_COLOR, fontSize: 12 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            allowDecimals={false}
-            width={28}
-            tick={{ fill: AXIS_COLOR, fontSize: 12 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            contentStyle={TOOLTIP_STYLE}
-            labelStyle={TOOLTIP_LABEL_STYLE}
-            cursor={{ stroke: GRID_COLOR }}
-          />
-          <Legend
-            iconType="circle"
-            iconSize={8}
-            wrapperStyle={{ fontSize: 12, color: AXIS_COLOR, paddingTop: 8 }}
-          />
-          <Area
-            type="monotone"
-            dataKey="knowledge"
-            name="Conocimiento"
-            stroke="#22d3ee"
-            strokeWidth={2}
-            fill="url(#fillKnowledge)"
-            isAnimationActive={!reduceMotion}
-          />
-          <Area
-            type="monotone"
-            dataKey="projects"
-            name="Proyectos"
-            stroke="#22c55e"
-            strokeWidth={2}
-            fill="url(#fillProjects)"
-            isAnimationActive={!reduceMotion}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {drawn ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="fillKnowledge" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.02} />
+              </linearGradient>
+              <linearGradient id="fillProjects" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fill: AXIS_COLOR, fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              width={36}
+              tick={{ fill: AXIS_COLOR, fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              labelStyle={TOOLTIP_LABEL_STYLE}
+              cursor={{ stroke: GRID_COLOR }}
+            />
+            <Legend
+              iconType="circle"
+              iconSize={8}
+              wrapperStyle={{ fontSize: 12, color: AXIS_COLOR, paddingTop: 8 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="knowledge"
+              name="Conocimiento"
+              stroke="#22d3ee"
+              strokeWidth={2}
+              fill="url(#fillKnowledge)"
+              isAnimationActive={!reduceMotion}
+            />
+            <Area
+              type="monotone"
+              dataKey="projects"
+              name="Proyectos"
+              stroke="#22c55e"
+              strokeWidth={2}
+              fill="url(#fillProjects)"
+              isAnimationActive={!reduceMotion}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : null}
     </div>
   );
 }

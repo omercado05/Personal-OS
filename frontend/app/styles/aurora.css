@@ -168,3 +168,55 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Micro-interacciones globales (Tarea 5)
+   --------------------------------------------------------------------------- */
+
+/* Botones primarios: destello que cruza el botón al pasar el cursor. Solo
+   `transform`, recortado al botón y sin alterar el layout. */
+button.primary,
+.link-button:not(.ghost, .danger) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+button.primary::after,
+.link-button:not(.ghost, .danger)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+}
+
+button.primary:hover:not(:disabled)::after,
+.link-button:not(.ghost, .danger):hover::after {
+  transform: translateX(100%);
+  transition: transform 600ms var(--ease-out);
+}
+
+/* Campos: anillo cian con halo al enfocar. */
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible,
+.search__input:focus-visible {
+  box-shadow:
+    0 0 0 3px var(--accent-35),
+    0 0 18px var(--accent-35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.primary::after,
+  .link-button:not(.ghost, .danger)::after {
+    display: none;
+  }
+}

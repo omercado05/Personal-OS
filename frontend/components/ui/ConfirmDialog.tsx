@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "motion/react";
 import { useRef, type ReactNode } from "react";
 
 import { useFocusTrap } from "@/lib/use-focus-trap";
@@ -31,6 +32,7 @@ export default function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
 
   useFocusTrap(open, modalRef, onCancel);
 
@@ -47,9 +49,13 @@ export default function ConfirmDialog({
         }
       }}
     >
-      <div
+      <motion.div
         ref={modalRef}
         className="modal"
+        // Entrada con escala y fundido; sin animación si se reduce el movimiento.
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={reduceMotion ? { duration: 0 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
@@ -67,7 +73,7 @@ export default function ConfirmDialog({
             {confirmLabel}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

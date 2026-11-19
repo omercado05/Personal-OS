@@ -1,9 +1,11 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { Stagger, StaggerItem } from "@/components/visual/Reveal";
 import { formatDateTime } from "@/lib/format";
 import { useApi } from "@/lib/use-api";
 
@@ -40,6 +42,7 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
 
   const query = term.trim();
   const isActive = query.length >= MIN_TERM_LENGTH;
@@ -127,36 +130,44 @@ export default function GlobalSearch() {
       </p>
 
       {showResults ? (
-        <div className="search__results">
+        <motion.div
+          className="search__results"
+          // Entrada con muelle suave; sin animación si se reduce el movimiento.
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.96, y: -6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={
+            reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 28 }
+          }
+        >
           {loading ? <p className="muted small">Buscando…</p> : null}
           {error ? <p className="error small">{error}</p> : null}
           {!loading && !error && items.length === 0 ? (
             <p className="muted small">Sin resultados.</p>
           ) : null}
-          {items.map((item) => {
-            const meta = KIND_META[item.kind];
-            if (!meta) {
-              return null;
-            }
-            return (
-              <Link
-                key={`${item.kind}-${item.id}`}
-                href={`${meta.href}${item.id}`}
-                onClick={() => setOpen(false)}
-              >
-                <span className="search__kind">{meta.label}</span>
-                <span className="search__title">{item.title}</span>
-                {item.kind === "task" ? (
-                  <span className="muted small">
-                    {item.status === "COMPLETED" ? "Hecha" : "Pendiente"}
-                    {item.dueAt ? ` · vence ${formatDateTime(item.dueAt)}` : ""}
-                  </span>
-                ) : null}
-                {item.snippet ? <span className="muted small">{item.snippet}</span> : null}
-              </Link>
-            );
-          })}
-        </div>
+          <Stagger step={0.04}>
+            {items.map((item) => {
+              const meta = KIND_META[item.kind];
+              if (!meta) {
+                return null;
+              }
+              return (
+                <StaggerItem key={`${item.kind}-${item.id}`}>
+                  <Link href={`${meta.href}${item.id}`} onClick={() => setOpen(false)}>
+                    <span className="search__kind">{meta.label}</span>
+                    <span className="search__title">{item.title}</span>
+                    {item.kind === "task" ? (
+                      <span className="muted small">
+                        {item.status === "COMPLETED" ? "Hecha" : "Pendiente"}
+                        {item.dueAt ? ` · vence ${formatDateTime(item.dueAt)}` : ""}
+                      </span>
+                    ) : null}
+                    {item.snippet ? <span className="muted small">{item.snippet}</span> : null}
+                  </Link>
+                </StaggerItem>
+              );
+            })}
+          </Stagger>
+        </motion.div>
       ) : null}
     </div>
   );

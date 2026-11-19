@@ -411,6 +411,10 @@ button.primary:hover:not(:disabled)::after,
 }
 
 .today-line__title {
+  /* Objetivo táctil de 44 px como mínimo. */
+  display: block;
+  min-height: 44px;
+  padding: 0.6rem 0;
   color: var(--text);
   text-decoration: none;
   overflow-wrap: anywhere;

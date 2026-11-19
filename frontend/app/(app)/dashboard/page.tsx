@@ -165,7 +165,9 @@ export default function DashboardPage() {
                   {dueToday === 1 ? "tarea para hoy" : "tareas para hoy"}
                 </span>
               </p>
-              <p className="story-opening__sub muted">{metrics.tasksOverdue} vencidas</p>
+              <p className="story-opening__sub muted">
+                {metrics.tasksOverdue} {metrics.tasksOverdue === 1 ? "vencida" : "vencidas"}
+              </p>
             </>
           ) : showSkeleton ? (
             <Skeleton className="skeleton--hero" />

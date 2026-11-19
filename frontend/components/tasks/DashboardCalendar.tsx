@@ -11,6 +11,7 @@ import {
   startOfMonth,
   subMonths,
 } from "date-fns";
+import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { listTaskDays } from "@/lib/tasks";
 import { useApi } from "@/lib/use-api";
@@ -76,7 +77,7 @@ export default function DashboardCalendar({ onDaySelect }: DashboardCalendarProp
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>
-        <h2 className="calendar__title">{format(currentMonth, "MMMM yyyy")}</h2>
+        <h2 className="calendar__title">{format(currentMonth, "MMMM yyyy", { locale: es })}</h2>
         <button
           type="button"
           className="ghost small"
@@ -105,8 +106,8 @@ export default function DashboardCalendar({ onDaySelect }: DashboardCalendarProp
               onClick={() => handleDayClick(d)}
               aria-label={
                 count > 0
-                  ? `${format(d, "d 'de' MMMM 'de' yyyy")}, ${count} pendiente(s)`
-                  : format(d, "d 'de' MMMM 'de' yyyy")
+                  ? `${format(d, "d 'de' MMMM 'de' yyyy", { locale: es })}, ${count} pendiente(s)`
+                  : format(d, "d 'de' MMMM 'de' yyyy", { locale: es })
               }
             >
               <span className="calendar__daynum">{format(d, "d")}</span>

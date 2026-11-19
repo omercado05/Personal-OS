@@ -94,6 +94,7 @@ export default function GlobalSearch() {
   }, []);
 
   const showResults = open && isActive;
+  const resultsKey = items.map((item) => `${item.kind}-${item.id}`).join(",");
 
   const status = !showResults
     ? ""
@@ -144,7 +145,9 @@ export default function GlobalSearch() {
           {!loading && !error && items.length === 0 ? (
             <p className="muted small">Sin resultados.</p>
           ) : null}
-          <Stagger step={0.04}>
+          {/* La clave (identidad de los resultados) reinicia la cascada con cada
+              conjunto nuevo; si no, se montaría vacía y no se repetiría. */}
+          <Stagger key={resultsKey} step={0.04}>
             {items.map((item) => {
               const meta = KIND_META[item.kind];
               if (!meta) {

@@ -131,9 +131,6 @@ export default function ProjectDetailPage() {
               </button>
             </div>
           </div>
-        </header>
-
-        <Reveal className="detail-body">
           {project.technologies.length > 0 ? (
             <div className="data-list__meta">
               {project.technologies.map((item) => (
@@ -143,7 +140,9 @@ export default function ProjectDetailPage() {
               ))}
             </div>
           ) : null}
+        </header>
 
+        <Reveal className="detail-body">
           <dl className="detail-grid glass">
             <div>
               <dt>URL</dt>
@@ -180,10 +179,10 @@ export default function ProjectDetailPage() {
           </dl>
 
           {project.description ? (
-            <>
+            <section className="detail-card glass">
               <h2 className="section-title">Descripción</h2>
               <div className="content-block">{project.description}</div>
-            </>
+            </section>
           ) : null}
         </Reveal>
       </motion.div>

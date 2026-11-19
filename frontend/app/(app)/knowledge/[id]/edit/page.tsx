@@ -49,14 +49,16 @@ export default function EditKnowledgePage() {
 
   return (
     <div className="panel">
-      <header className="panel__header detail-head glass">
-        <div>
-          <p className="eyebrow">Knowledge</p>
-          <h1>Editar entrada</h1>
+      <header className="detail-head glass">
+        <div className="detail-head__row">
+          <div>
+            <p className="eyebrow">Knowledge</p>
+            <h1>Editar entrada</h1>
+          </div>
+          <Link className="link-button ghost" href="/knowledge">
+            ← Volver
+          </Link>
         </div>
-        <Link className="link-button ghost" href="/knowledge">
-          ← Volver
-        </Link>
       </header>
 
       {loading ? (

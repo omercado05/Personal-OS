@@ -785,3 +785,28 @@ button.primary:hover:not(:disabled)::after,
 .meta-list dd {
   margin: 0.25rem 0 0;
 }
+
+/* Tarjeta de cristal para bloques de texto del detalle (descripción). */
+.detail-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+}
+
+.detail-card .section-title {
+  margin: 0;
+}
+
+/* Cabeceras de new/edit: título y enlace sin márgenes sobrantes. */
+.detail-head__row h1 {
+  margin: 0;
+}
+
+.detail-head__row .eyebrow {
+  margin: 0 0 0.35rem;
+}
+
+.detail-head__row {
+  align-items: center;
+}

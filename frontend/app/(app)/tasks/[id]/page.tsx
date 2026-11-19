@@ -156,10 +156,10 @@ export default function TaskDetailPage() {
               ) : null}
             </dl>
             {task.description ? (
-              <>
+              <section className="detail-card glass">
                 <h2 className="section-title">Descripción</h2>
                 <div className="content-block">{task.description}</div>
-              </>
+              </section>
             ) : null}
           </Reveal>
         ) : null}

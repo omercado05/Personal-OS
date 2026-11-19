@@ -129,9 +129,6 @@ export default function KnowledgeDetailPage() {
               </button>
             </div>
           </div>
-        </header>
-
-        <Reveal className="detail-body">
           {entry.tags.length > 0 ? (
             <div className="data-list__meta">
               {entry.tags.map((item) => (
@@ -141,8 +138,10 @@ export default function KnowledgeDetailPage() {
               ))}
             </div>
           ) : null}
+        </header>
 
-          <article className="content-block">
+        <Reveal className="detail-body">
+          <article className="content-block glass">
             {entry.content || <span className="muted">Sin contenido.</span>}
           </article>
 

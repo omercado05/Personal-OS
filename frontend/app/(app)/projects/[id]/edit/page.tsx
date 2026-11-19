@@ -49,14 +49,16 @@ export default function EditProjectPage() {
 
   return (
     <div className="panel">
-      <header className="panel__header detail-head glass">
-        <div>
-          <p className="eyebrow">Projects</p>
-          <h1>Editar proyecto</h1>
+      <header className="detail-head glass">
+        <div className="detail-head__row">
+          <div>
+            <p className="eyebrow">Projects</p>
+            <h1>Editar proyecto</h1>
+          </div>
+          <Link className="link-button ghost" href="/projects">
+            ← Volver
+          </Link>
         </div>
-        <Link className="link-button ghost" href="/projects">
-          ← Volver
-        </Link>
       </header>
 
       {loading ? (

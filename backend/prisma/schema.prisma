@@ -45,7 +45,6 @@ model KnowledgeEntry {
   tags KnowledgeEntryTag[]
 
   @@index([userId, category])
-  @@fulltext([title, content])
   @@map("knowledge_entries")
 }
 

@@ -60,6 +60,10 @@ export function createHexclaveClientApp(host?: string | null) {
     baseUrl: resolveHexclaveBaseUrl(host),
     tokenStore: "nextjs-cookie",
     analytics: { enabled: false },
+    // Sin la insignia flotante «Hexclave Dev Tools»: con "auto" (por defecto)
+    // aparece en entornos que parecen de desarrollo, como entrar por IP de
+    // Tailscale, y en el móvil tapa «Cuenta» de la barra inferior.
+    devTool: false,
     urls: {
       default: { type: "handler-component" },
       home: "/",

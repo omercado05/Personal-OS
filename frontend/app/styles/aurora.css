@@ -1,0 +1,153 @@
+/* ===========================================================================
+   Base visual «Aurora viva»: tokens, capa de aurora, cristal y haz de luz.
+   =========================================================================== */
+
+:root {
+  --aurora-opacity-vivid: 0.5;
+  --aurora-opacity-calm: 0.18;
+  --aurora-cycle-vivid: 14s;
+  --aurora-cycle-calm: 30s;
+  --glass-bg: rgba(16, 19, 28, 0.88);
+  --beam-cycle: 3.5s;
+}
+
+/* Ángulo del haz de luz: registrado para poder animarlo con transiciones
+   de gradiente cónico. */
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* --- Aurora ------------------------------------------------------------- */
+
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: var(--aurora-opacity-calm);
+  --aurora-cycle: var(--aurora-cycle-calm);
+  transition: opacity 1.2s var(--ease-in-out);
+}
+
+.aurora[data-intensity="vivid"] {
+  opacity: var(--aurora-opacity-vivid);
+  --aurora-cycle: var(--aurora-cycle-vivid);
+}
+
+.aurora__light {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+  animation: aurora-drift var(--aurora-cycle) ease-in-out infinite alternate;
+}
+
+.aurora__light--cyan {
+  top: -25vmax;
+  left: -15vmax;
+  background: radial-gradient(circle, #22d3ee 0%, transparent 65%);
+}
+
+.aurora__light--green {
+  top: -10vmax;
+  right: -20vmax;
+  background: radial-gradient(circle, #22c55e 0%, transparent 65%);
+  animation-delay: calc(var(--aurora-cycle) * -0.33);
+  animation-direction: alternate-reverse;
+}
+
+.aurora__light--deep {
+  bottom: -30vmax;
+  left: 20%;
+  background: radial-gradient(circle, #0e7490 0%, transparent 65%);
+  animation-delay: calc(var(--aurora-cycle) * -0.66);
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1);
+  }
+  to {
+    transform: translate3d(8%, 6%, 0) rotate(40deg) scale(1.15);
+  }
+}
+
+/* --- Cristal ------------------------------------------------------------ */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--surface-border);
+}
+
+/* --- Haz de luz en el borde ---------------------------------------------- */
+
+/* No altera la maquetación: el haz vive en pseudo-elementos y hereda el
+   radio del elemento. */
+.beam,
+.beam-hover {
+  position: relative;
+  isolation: isolate;
+}
+
+.beam::before,
+.beam-hover::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angle),
+    transparent 0 70%,
+    var(--accent),
+    var(--accent-2),
+    transparent
+  );
+  /* Recorta el centro para dejar solo el borde de 1px. */
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  animation: beam-spin var(--beam-cycle) linear infinite;
+}
+
+.beam-hover::before {
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+.beam-hover:hover::before,
+.beam-hover:focus-within::before {
+  opacity: 1;
+}
+
+@keyframes beam-spin {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora__light,
+  .beam::before,
+  .beam-hover::before {
+    animation: none;
+  }
+
+  .aurora {
+    transition: none;
+  }
+}

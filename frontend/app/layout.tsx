@@ -4,9 +4,11 @@ import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
 import { createHexclaveClientApp } from "@/hexclave/client";
+import Aurora from "@/components/visual/Aurora";
 import { fontVariables } from "@/lib/fonts";
 
 import "./globals.css";
+import "./styles/aurora.css";
 
 export const metadata: Metadata = {
   title: "Personal OS",
@@ -52,6 +54,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="es" className={fontVariables} suppressHydrationWarning>
       <body>
+        <Aurora />
         <HexclaveProvider app={hexclaveClientApp} lang="es-ES">
           <HexclaveTheme theme={HEXCLAVE_THEME}>{children}</HexclaveTheme>
         </HexclaveProvider>

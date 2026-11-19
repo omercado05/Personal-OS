@@ -35,6 +35,8 @@ export default function AnimatedNumber({ value }: { value: number }) {
     return () => {
       controls.stop();
       clearTimeout(glowTimer);
+      // Reinicia el brillo para que se repita con el siguiente valor.
+      setGlowing(false);
     };
   }, [value, reduceMotion]);
 

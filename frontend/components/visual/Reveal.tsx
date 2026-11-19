@@ -1,9 +1,34 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { motion, useInView, useReducedMotion } from "motion/react";
+import { useRef, useSyncExternalStore, type ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+const VISIBLE = { opacity: 1, y: 0 };
+const HIDDEN = { opacity: 0, y: 16 };
+
+/** `false` en el servidor y en la hidratación; `true` una vez montado en el cliente. */
+const subscribeNever = () => () => {};
+
+/**
+ * Estado de revelado compartido. En el servidor, en el primer render del
+ * cliente y con `prefers-reduced-motion` el contenido está en su estado final
+ * visible (sin `opacity: 0` en el HTML ni desajuste de hidratación). Solo tras
+ * montar y sin reducción de movimiento se oculta y se revela al entrar en el
+ * viewport. `amount: "some"` evita que elementos muy altos nunca se revelen.
+ */
+function useReveal(once: boolean) {
+  const reduceMotion = useReducedMotion();
+  const ref = useRef<HTMLElement>(null);
+  const armed = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  );
+  const inView = useInView(ref, { once, amount: "some", margin: "0px 0px -10% 0px" });
+
+  return { ref, animated: armed && !reduceMotion, shown: !armed || !!reduceMotion || inView };
+}
 
 type RevealProps = {
   children: ReactNode;
@@ -13,26 +38,18 @@ type RevealProps = {
   once?: boolean;
 };
 
-/**
- * Aparece con un fundido y un leve ascenso al entrar en el viewport. Con
- * `prefers-reduced-motion` renderiza el elemento sin animación.
- */
+/** Aparece con un fundido y un leve ascenso al entrar en el viewport. */
 export function Reveal({ children, as = "div", className, delay = 0, once = true }: RevealProps) {
-  const reduceMotion = useReducedMotion();
-
-  if (reduceMotion) {
-    const Tag = as;
-    return <Tag className={className}>{children}</Tag>;
-  }
-
+  const { ref, animated, shown } = useReveal(once);
   const MotionTag = motion[as];
+
   return (
     <MotionTag
+      ref={ref as never}
       className={className}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, amount: 0.2 }}
-      transition={{ duration: 0.48, ease: EASE, delay }}
+      initial={false}
+      animate={shown ? VISIBLE : HIDDEN}
+      transition={animated && shown ? { duration: 0.48, ease: EASE, delay } : { duration: 0 }}
     >
       {children}
     </MotionTag>
@@ -51,21 +68,19 @@ type StaggerProps = {
  * segundos entre sí al entrar en el viewport.
  */
 export function Stagger({ children, as = "div", className, step = 0.06 }: StaggerProps) {
-  const reduceMotion = useReducedMotion();
-
-  if (reduceMotion) {
-    const Tag = as;
-    return <Tag className={className}>{children}</Tag>;
-  }
-
+  const { ref, shown } = useReveal(true);
   const MotionTag = motion[as];
+
   return (
     <MotionTag
+      ref={ref as never}
       className={className}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: step } } }}
+      initial={false}
+      animate={shown ? "visible" : "hidden"}
+      variants={{
+        hidden: { transition: { duration: 0 } },
+        visible: { transition: { staggerChildren: step } },
+      }}
     >
       {children}
     </MotionTag>
@@ -80,20 +95,14 @@ type StaggerItemProps = {
 
 /** Elemento de una cascada `Stagger`; hereda su estado `hidden`/`visible`. */
 export function StaggerItem({ children, as = "div", className }: StaggerItemProps) {
-  const reduceMotion = useReducedMotion();
-
-  if (reduceMotion) {
-    const Tag = as;
-    return <Tag className={className}>{children}</Tag>;
-  }
-
   const MotionTag = motion[as];
+
   return (
     <MotionTag
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 16 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.48, ease: EASE } },
+        hidden: { ...HIDDEN, transition: { duration: 0 } },
+        visible: { ...VISIBLE, transition: { duration: 0.48, ease: EASE } },
       }}
     >
       {children}

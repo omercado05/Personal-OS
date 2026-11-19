@@ -29,6 +29,9 @@ export async function deleteFromDetail(page: Page): Promise<void> {
 /** Inicia sesión con email y contraseña en el formulario de Hexclave. */
 export async function signIn(page: Page): Promise<void> {
   const { email, password } = credentials();
+  // La tarjeta de acceso flota en bucle y Playwright no la da por «estable»
+  // para pulsar: se emula movimiento reducido (que apaga la flotación).
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/handler/sign-in");
   await page.getByRole("tab", { name: "Correo y contraseña" }).click();
   const panel = page.getByRole("tabpanel", { name: "Correo y contraseña" });

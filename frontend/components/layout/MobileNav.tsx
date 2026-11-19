@@ -89,6 +89,16 @@ export default function MobileNav() {
               aria-current={active ? "page" : undefined}
               onClick={closeSheet}
             >
+              {active ? (
+                <motion.span
+                  layoutId="nav-active-light-mobile"
+                  className="nav-light"
+                  aria-hidden="true"
+                  transition={
+                    reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36 }
+                  }
+                />
+              ) : null}
               <Icon size={20} strokeWidth={2} aria-hidden="true" />
               <span>{label}</span>
             </Link>

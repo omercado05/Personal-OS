@@ -315,6 +315,13 @@ button:disabled {
   font-size: 0.8rem;
   line-height: 1;
   box-shadow: var(--glow-accent);
+  animation: brand-pulse 4s ease-in-out infinite;
+}
+
+@keyframes brand-pulse {
+  50% {
+    box-shadow: 0 0 22px var(--accent-35);
+  }
 }
 
 .sidebar__nav {
@@ -361,18 +368,18 @@ button:disabled {
   opacity: 1;
 }
 
-/* Barra indicadora del elemento activo. */
-.sidebar__nav a.active::before {
-  content: "";
+/* Luz deslizante del elemento activo (motion, layoutId): barra cian con brillo. */
+.nav-light {
   position: absolute;
   left: -0.75rem;
   top: 50%;
-  transform: translateY(-50%);
+  translate: 0 -50%;
   width: 3px;
   height: 1.4rem;
   border-radius: var(--radius-pill);
   background: var(--accent);
   box-shadow: 0 0 12px var(--accent-35);
+  pointer-events: none;
 }
 
 .sidebar__footer {
@@ -774,6 +781,7 @@ button.small {
 
   .mobile-nav a,
   .mobile-nav button {
+    position: relative;
     flex: 1 1 0;
     display: flex;
     flex-direction: column;
@@ -792,6 +800,16 @@ button.small {
     transition:
       color var(--dur-2) var(--ease-out),
       background var(--dur-2) var(--ease-out);
+  }
+
+  /* En móvil la luz es un filo cian en el borde superior del elemento activo. */
+  .mobile-nav .nav-light {
+    left: 20%;
+    right: 20%;
+    top: -0.45rem;
+    translate: none;
+    width: auto;
+    height: 3px;
   }
 
   .mobile-nav a.active,
@@ -1640,6 +1658,8 @@ button,
 .auth-shell {
   min-height: 100dvh;
   display: grid;
+  /* Sin esto la columna crece al contenido mínimo y desborda en móvil. */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: var(--space-4);
 }
@@ -1678,10 +1698,32 @@ button,
   color: var(--text-muted);
 }
 
+.auth-float {
+  width: 100%;
+  animation: auth-float 6s ease-in-out infinite;
+}
+
+/* La flotación se detiene al interactuar con el formulario. */
+.auth-float:hover,
+.auth-float:focus-within {
+  animation-play-state: paused;
+}
+
+@keyframes auth-float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-float,
+  .brand-mark {
+    animation: none;
+  }
+}
+
 .auth-card {
   width: 100%;
-  background: var(--glass-bg);
-  border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 4vw, 2rem);
   box-shadow: var(--shadow-2);

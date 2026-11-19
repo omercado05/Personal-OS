@@ -1,5 +1,7 @@
 import { HexclaveHandler } from "@hexclave/next";
 
+import AuthCard from "@/components/visual/AuthCard";
+
 /**
  * Ruta comodín que renderiza las páginas de autenticación de Hexclave
  * (`/handler/sign-in`, `/handler/sign-up`, `/handler/oauth-callback`, …).
@@ -21,9 +23,9 @@ export default function AuthHandlerPage() {
             <p className="auth-brand__lead">Proyectos, conocimiento e ideas en un solo lugar.</p>
           </div>
         </header>
-        <div className="auth-card">
+        <AuthCard>
           <HexclaveHandler fullPage={false} />
-        </div>
+        </AuthCard>
       </div>
     </main>
   );

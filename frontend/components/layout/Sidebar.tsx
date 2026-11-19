@@ -2,6 +2,7 @@
 
 import { useHexclaveApp, useUser } from "@hexclave/next";
 import { LogOut } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,6 +13,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const app = useHexclaveApp();
   const user = useUser();
+  const reduceMotion = useReducedMotion();
 
   const name = user?.displayName ?? user?.primaryEmail ?? "Usuario";
 
@@ -36,6 +38,16 @@ export default function Sidebar() {
               className={active ? "active" : undefined}
               aria-current={active ? "page" : undefined}
             >
+              {active ? (
+                <motion.span
+                  layoutId="nav-active-light"
+                  className="nav-light"
+                  aria-hidden="true"
+                  transition={
+                    reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36 }
+                  }
+                />
+              ) : null}
               <Icon size={18} strokeWidth={2} aria-hidden="true" />
               <span>{label}</span>
             </Link>

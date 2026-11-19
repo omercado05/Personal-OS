@@ -23,8 +23,10 @@ fuera de casa a través de Tailscale, sin abrir puertos ni contratar dominio.
 - **Cuenta y seguridad** — inicio de sesión con Hexclave
   autoalojado; cada usuario solo ve sus propios datos. La API aplica límite de peticiones y
   cabeceras de seguridad.
-- **Interfaz** — tema oscuro «Bento Neon», adaptada a móvil, tablet y escritorio, y accesible
-  con teclado y lector de pantalla.
+- **Interfaz** — tema oscuro «Aurora viva»: aurora animada de fondo, superficies de cristal con
+  haz de luz, líneas de tiempo en listados y dashboard como relato con scroll. Adaptada a móvil,
+  tablet y escritorio, respeta el movimiento reducido y es accesible con teclado y lector de
+  pantalla.
 
 ## Stack
 

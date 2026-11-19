@@ -1,5 +1,6 @@
 import type { KnowledgeEntry, Project, Tag } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { everyTermMatches, searchTerms } from "../lib/text-search.js";
 import {
   datePartsInTimeZone,
   endOfDayInTimeZone,
@@ -56,18 +57,37 @@ function endOfLocalDay(date: Date): Date {
   return result;
 }
 
-function snippet(text: string | null | undefined, q: string, length = 160): string {
+/** Pliega un carácter (sin mayúsculas ni tilde) conservando la longitud del texto. */
+function foldChar(char: string): string {
+  const folded = char.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  return folded.length === char.length ? folded : char;
+}
+
+/** Texto sin distinguir mayúsculas ni tildes; mantiene los índices del original. */
+function fold(text: string): string {
+  return Array.from(text, foldChar).join("");
+}
+
+function snippet(text: string | null | undefined, terms: string[], length = 160): string {
   if (!text) {
     return "";
   }
-  const lower = text.toLowerCase();
-  const query = q.toLowerCase();
-  const index = lower.indexOf(query);
+  const folded = fold(text);
+  let index = -1;
+  let matchLength = 0;
+  for (const term of terms) {
+    const foldedTerm = fold(term);
+    const found = folded.indexOf(foldedTerm);
+    if (found !== -1 && (index === -1 || found < index)) {
+      index = found;
+      matchLength = foldedTerm.length;
+    }
+  }
   if (index === -1) {
     return text.length <= length ? text : `${text.slice(0, length).trim()}…`;
   }
   const start = Math.max(0, index - 60);
-  const end = Math.min(text.length, index + query.length + 80);
+  const end = Math.min(text.length, index + matchLength + 80);
   const slice = text.slice(start, end);
   const prefix = start > 0 ? "… " : "";
   const suffix = end < text.length ? " …" : "";
@@ -114,8 +134,7 @@ export function createSearchRepository(): SearchRepository {
     async search(params) {
       const { userId, q, type, page, pageSize } = params;
       const offset = (page - 1) * pageSize;
-      const query = q.trim();
-      const lowerQuery = query.toLowerCase();
+      const terms = searchTerms(q);
       const includeKnowledge = type === "all" || type === "knowledge";
       const includeProjects = type === "all" || type === "projects";
       // Con "all" el offset se aplica sobre la lista combinada: cada tabla aporta
@@ -126,19 +145,19 @@ export function createSearchRepository(): SearchRepository {
 
       const knowledgeWhere = {
         userId,
-        OR: [
-          { title: { contains: query } },
-          { content: { contains: query } },
-          { tags: { some: { tag: { name: { contains: lowerQuery } } } } },
-        ],
+        ...everyTermMatches(terms, (term) => [
+          { title: { contains: term } },
+          { content: { contains: term } },
+          { tags: { some: { tag: { name: { contains: term.toLowerCase() } } } } },
+        ]),
       };
       const projectWhere = {
         userId,
-        OR: [
-          { name: { contains: query } },
-          { description: { contains: query } },
-          { technologies: { some: { name: { contains: lowerQuery } } } },
-        ],
+        ...everyTermMatches(terms, (term) => [
+          { name: { contains: term } },
+          { description: { contains: term } },
+          { technologies: { some: { name: { contains: term.toLowerCase() } } } },
+        ]),
       };
 
       const [knowledgeRows, knowledgeCount, projectRows, projectCount] = await Promise.all([
@@ -167,7 +186,7 @@ export function createSearchRepository(): SearchRepository {
           kind: "knowledge",
           id: row.id,
           title: row.title,
-          snippet: snippet(row.content, query),
+          snippet: snippet(row.content, terms),
           category: row.category,
           tags: row.tags.map((t) => t.tag.name),
           updatedAt: row.updatedAt,
@@ -177,7 +196,7 @@ export function createSearchRepository(): SearchRepository {
           kind: "project",
           id: row.id,
           title: row.name,
-          snippet: snippet(row.description, query),
+          snippet: snippet(row.description, terms),
           status: row.status,
           url: row.url ?? undefined,
           tags: row.technologies.map((t) => t.name),

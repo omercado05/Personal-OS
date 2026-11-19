@@ -7,7 +7,7 @@ interface FakeRow {
 }
 
 interface FindManyArgs {
-  where?: { createdAt?: { gte?: Date } };
+  where?: { createdAt?: { gte?: Date }; AND?: unknown[] };
   skip?: number;
   take?: number;
 }
@@ -160,5 +160,87 @@ describe("searchRepository.metrics: actividad mensual", () => {
       { month: "2026-10", knowledge: 0, projects: 0 },
       { month: "2026-11", knowledge: 1, projects: 0 },
     ]);
+  });
+});
+
+describe("searchRepository.search con varias palabras", () => {
+  beforeEach(() => {
+    knowledgeRows.length = 0;
+    projectRows.length = 0;
+    prismaMock.knowledgeEntry.findMany.mockClear();
+    prismaMock.project.findMany.mockClear();
+  });
+
+  function search(q: string, type: "all" | "knowledge" | "projects" = "all") {
+    return createSearchRepository().search({ userId: 1n, q, type, page: 1, pageSize: 10 });
+  }
+
+  it("exige cada palabra en conocimiento, en cualquier orden", async () => {
+    await search("docker backup");
+
+    const { where } = prismaMock.knowledgeEntry.findMany.mock.calls[0]![0];
+    expect(where?.AND).toHaveLength(2);
+    expect(where?.AND?.[0]).toEqual({
+      OR: [
+        { title: { contains: "docker" } },
+        { content: { contains: "docker" } },
+        { tags: { some: { tag: { name: { contains: "docker" } } } } },
+      ],
+    });
+  });
+
+  it("exige cada palabra en proyectos", async () => {
+    await search("docker backup");
+
+    const { where } = prismaMock.project.findMany.mock.calls[0]![0];
+    expect(where?.AND).toHaveLength(2);
+    expect(where?.AND?.[0]).toEqual({
+      OR: [
+        { name: { contains: "docker" } },
+        { description: { contains: "docker" } },
+        { technologies: { some: { name: { contains: "docker" } } } },
+      ],
+    });
+  });
+
+  it("busca etiquetas y tecnologías en minúsculas", async () => {
+    await search("Docker");
+
+    const knowledgeWhere = prismaMock.knowledgeEntry.findMany.mock.calls[0]![0].where;
+    const projectWhere = prismaMock.project.findMany.mock.calls[0]![0].where;
+    expect(knowledgeWhere?.AND?.[0]).toMatchObject({
+      OR: [
+        { title: { contains: "Docker" } },
+        { content: { contains: "Docker" } },
+        { tags: { some: { tag: { name: { contains: "docker" } } } } },
+      ],
+    });
+    expect(projectWhere?.AND?.[0]).toMatchObject({
+      OR: [
+        { name: { contains: "Docker" } },
+        { description: { contains: "Docker" } },
+        { technologies: { some: { name: { contains: "docker" } } } },
+      ],
+    });
+  });
+
+  it("el snippet encuentra la palabra sin distinguir mayúsculas ni tildes", async () => {
+    const row = knowledge(1, 1);
+    row.content = `${"x".repeat(100)} copia de seguridad con Café y Docker`;
+    knowledgeRows.push(row);
+
+    const { items } = await search("cafe docker", "knowledge");
+
+    expect(items[0]?.snippet).toContain("Café");
+  });
+
+  it("el snippet usa el inicio del texto si ninguna palabra aparece", async () => {
+    const row = knowledge(1, 1);
+    row.content = "y".repeat(200);
+    knowledgeRows.push(row);
+
+    const { items } = await search("zzz", "knowledge");
+
+    expect(items[0]?.snippet).toBe(`${"y".repeat(160)}…`);
   });
 });

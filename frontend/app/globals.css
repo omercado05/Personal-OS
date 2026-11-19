@@ -285,7 +285,7 @@ button:disabled {
   gap: var(--space-5);
   padding: var(--space-5) var(--space-4);
   border-right: 1px solid var(--surface-border);
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  background: var(--glass-bg);
   backdrop-filter: blur(14px);
 }
 
@@ -429,7 +429,7 @@ button:disabled {
   align-items: center;
   gap: 0.75rem;
   padding: 0.85rem 2rem;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--surface-border);
 }
@@ -494,9 +494,6 @@ button:disabled {
 }
 
 .panel {
-  background: var(--glass-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -658,7 +655,7 @@ button.small {
   width: 100%;
   font: inherit;
   color: var(--text);
-  background: var(--surface);
+  background: var(--glass-bg);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.85rem 0.55rem 2.15rem;
@@ -1001,6 +998,10 @@ button.danger:hover:not(:disabled) {
   display: grid;
   gap: 1.1rem;
   max-width: 760px;
+  padding: var(--space-5);
+  background: var(--glass-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
 }
 
 .form__actions {
@@ -1170,7 +1171,7 @@ button.danger:hover:not(:disabled) {
   border: 1px dashed var(--surface-border);
   border-radius: var(--radius-lg);
   text-align: center;
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  background: var(--glass-bg);
 }
 
 .empty__icon {
@@ -1270,6 +1271,10 @@ button.danger:hover:not(:disabled) {
 }
 
 .detail-grid {
+  padding: var(--space-5);
+  background: var(--glass-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;

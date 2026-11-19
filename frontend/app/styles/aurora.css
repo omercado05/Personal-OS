@@ -100,10 +100,10 @@
 .beam-hover::before {
   content: "";
   position: absolute;
-  inset: -1px;
+  inset: -2px;
   z-index: -1;
   border-radius: inherit;
-  padding: 1px;
+  padding: 2px;
   background: conic-gradient(
     from var(--angle),
     transparent 0 70%,
@@ -111,15 +111,11 @@
     var(--accent-2),
     transparent
   );
-  /* Recorta el centro para dejar solo el borde de 1px. */
+  /* Recorta el centro para dejar solo el borde de 2px. */
   mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
   pointer-events: none;
   animation: beam-spin var(--beam-cycle) linear infinite;
 }

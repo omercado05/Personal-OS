@@ -52,3 +52,8 @@ docs/design-system/
 docs/superpowers/
 .mcp.json
 .claude/
+
+# Playwright (tests e2e del frontend): sesión del usuario de prueba y resultados
+frontend/playwright/.auth/
+frontend/test-results/
+frontend/playwright-report/

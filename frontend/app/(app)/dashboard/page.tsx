@@ -201,11 +201,13 @@ export default function DashboardPage() {
       ) : null}
 
       <StoryBand id="hoy" label="Hoy">
-        {todayTasks ? (
-          <TodayTimeline tasks={todayTasks} />
-        ) : showSkeleton ? (
-          <Skeleton className="skeleton--line" />
-        ) : null}
+        <div className="today-card glass">
+          {todayTasks ? (
+            <TodayTimeline tasks={todayTasks} />
+          ) : showSkeleton ? (
+            <Skeleton className="skeleton--line" />
+          ) : null}
+        </div>
         <div className="calendar-grid">
           <DashboardCalendar onDaySelect={setSelectedDay} />
           <DayTasksCard date={selectedDay} />
@@ -381,7 +383,7 @@ export default function DashboardPage() {
 /** Línea de tiempo horizontal de las tareas pendientes de hoy (hora + título). */
 function TodayTimeline({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) {
-    return <p className="muted">Nada pendiente para hoy</p>;
+    return <p className="today-card__empty muted">Nada pendiente para hoy</p>;
   }
 
   return (

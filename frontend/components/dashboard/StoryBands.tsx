@@ -23,7 +23,7 @@ export function StoryBand({
   return (
     <section id={id} className="story-band" aria-labelledby={headingId}>
       <Reveal className="story-band__inner">
-        <h2 id={headingId} className="story-band__title">
+        <h2 id={headingId} className="story-band__title glass">
           {label}
         </h2>
         {children}

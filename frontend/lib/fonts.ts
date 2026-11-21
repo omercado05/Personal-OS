@@ -1,7 +1,7 @@
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
 /**
- * Tipografías del sistema de diseño «Bento Neon» (ver
+ * Tipografías del sistema de diseño «Aurora viva» (ver
  * `docs/design-system/personal-os/MASTER.md`).
  *
  * `next/font` las descarga y las sirve en tiempo de build (self-hosted), lo que

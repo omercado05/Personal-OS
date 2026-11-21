@@ -6,7 +6,7 @@ import AuthCard from "@/components/visual/AuthCard";
  * Ruta comodín que renderiza las páginas de autenticación de Hexclave
  * (`/handler/sign-in`, `/handler/sign-up`, `/handler/oauth-callback`, …).
  *
- * Envolvemos el handler con el branding de «Bento Neon» sin perder su funcionalidad.
+ * Envolvemos el handler con la marca de la app («Aurora viva») sin perder su funcionalidad.
  * El componente vive dentro de `HexclaveProvider` y `HexclaveTheme` del layout raíz.
  */
 export default function AuthHandlerPage() {

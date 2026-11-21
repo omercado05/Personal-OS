@@ -736,7 +736,7 @@ button.primary:hover:not(:disabled)::after,
 
 .detail-head__row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-3);
@@ -770,12 +770,6 @@ button.primary:hover:not(:disabled)::after,
   border-radius: var(--radius-lg);
 }
 
-/* Cristal sobre superficies ya acristaladas en .form/.detail-grid: una sola capa. */
-.detail-grid.glass,
-.form.glass {
-  border-radius: var(--radius-lg);
-}
-
 @media (max-width: 480px) {
   .detail-head {
     padding: var(--space-3) var(--space-4);
@@ -787,17 +781,13 @@ button.primary:hover:not(:disabled)::after,
   }
 }
 
-/* Fechas del detalle de Knowledge: tarjeta de cristal en cuadrícula. */
+/* Fechas del detalle de Knowledge: cuadrícula sobre cristal (.glass en el JSX). */
 .meta-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-3);
   margin: 0;
   padding: var(--space-4);
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
 }
 
@@ -831,10 +821,6 @@ button.primary:hover:not(:disabled)::after,
 
 .detail-head__row .eyebrow {
   margin: 0 0 0.35rem;
-}
-
-.detail-head__row {
-  align-items: center;
 }
 
 /* Marcador de la cifra de PageHero mientras llegan los datos. */

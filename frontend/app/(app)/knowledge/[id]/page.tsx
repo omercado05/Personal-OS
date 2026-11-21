@@ -145,7 +145,7 @@ export default function KnowledgeDetailPage() {
             {entry.content || <span className="muted">Sin contenido.</span>}
           </article>
 
-          <dl className="meta-list">
+          <dl className="meta-list glass">
             <div>
               <dt>Creada</dt>
               <dd>{formatDateTime(entry.createdAt)}</dd>

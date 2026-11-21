@@ -1,5 +1,5 @@
 /* ===========================================================================
-   Design tokens — «Bento Neon»
+   Design tokens — «Aurora viva» (paleta heredada de «Bento Neon»)
    Fuente de verdad: docs/design-system/personal-os/MASTER.md
    Base casi negra (OLED), acento cian neón, secundario verde neón, superficies
    de cristal, y tipografías Space Grotesk + Inter + JetBrains Mono.
@@ -1346,7 +1346,7 @@ button.danger:hover:not(:disabled) {
 }
 
 /* ---------------------------------------------------------------------------
-   F11.1 · Fundamentos «Bento Neon»: tipografía, foco accesible y movimiento.
+   F11.1 · Fundamentos: tipografía, foco accesible y movimiento.
    --------------------------------------------------------------------------- */
 
 h1,
@@ -1404,7 +1404,7 @@ button,
 }
 
 /* ---------------------------------------------------------------------------
-   F11.3 · Dashboard «Bento Neon»: métricas, gráficos y skeletons.
+   F11.3 · Dashboard: métricas, gráficos y skeletons.
    --------------------------------------------------------------------------- */
 
 /* Rejilla de tarjetas de métricas. */
@@ -1652,7 +1652,7 @@ button,
 }
 
 /* ---------------------------------------------------------------------------
-   F11.4 · Módulos + Auth: login con branding «Bento Neon».
+   F11.4 · Módulos + Auth: login con la marca de la app.
    --------------------------------------------------------------------------- */
 
 .auth-shell {
@@ -1748,10 +1748,6 @@ button,
 .auth-actions {
   display: flex;
   justify-content: center;
-}
-
-.dashboard__calendar {
-  margin-top: var(--space-5);
 }
 
 .calendar-grid {

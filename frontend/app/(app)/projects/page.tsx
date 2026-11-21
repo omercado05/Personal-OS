@@ -117,7 +117,12 @@ export default function ProjectsPage() {
 
   return (
     <div className="panel">
-      <PageHero eyebrow="Proyectos" count={total} noun={total === 1 ? "proyecto" : "proyectos"}>
+      <PageHero
+        loading={meta === null && !error}
+        eyebrow="Proyectos"
+        count={total}
+        noun={total === 1 ? "proyecto" : "proyectos"}
+      >
         <div className="row-actions">
           <Link className="link-button small" href="/projects/new">
             <Plus size={16} aria-hidden="true" />

@@ -101,7 +101,12 @@ export default function TasksPage() {
 
   return (
     <div className="panel">
-      <PageHero eyebrow="Tareas" count={total} noun={total === 1 ? "tarea" : "tareas"}>
+      <PageHero
+        loading={meta === null && !error}
+        eyebrow="Tareas"
+        count={total}
+        noun={total === 1 ? "tarea" : "tareas"}
+      >
         <div className="row-actions">
           <Link className="link-button small" href="/tasks/new">
             <Plus size={16} aria-hidden="true" />

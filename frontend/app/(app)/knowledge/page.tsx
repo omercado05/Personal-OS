@@ -140,7 +140,12 @@ export default function KnowledgePage() {
 
   return (
     <div className="panel">
-      <PageHero eyebrow="Conocimiento" count={total} noun={total === 1 ? "nota" : "notas"}>
+      <PageHero
+        loading={meta === null && !error}
+        eyebrow="Conocimiento"
+        count={total}
+        noun={total === 1 ? "nota" : "notas"}
+      >
         <div className="row-actions">
           <Link className="link-button small" href="/knowledge/new">
             <Plus size={16} aria-hidden="true" />
